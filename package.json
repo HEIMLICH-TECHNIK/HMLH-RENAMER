@@ -1,7 +1,7 @@
 {
   "name": "hmlh_namer",
-  "version": "1.0.0",
-  "description": "파일 이름 변경 도구",
+  "version": "0.0.2",
+  "description": "Rename files with a simple interface by HEIMLICH®",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

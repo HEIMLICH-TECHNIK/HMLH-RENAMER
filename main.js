@@ -6,9 +6,15 @@ const probeImageSize = require('probe-image-size');
 const sharp = require('sharp');
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
+const ffprobe = require('ffprobe');
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
+
+// ffprobe 경로 설정
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
+// ffprobe 경로 저장
+const ffprobePath = ffprobeInstaller.path;
 
 function createWindow() {
   // Create the browser window
@@ -65,9 +71,6 @@ function createWindow() {
 
 // This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
-  // ffprobe 경로 설정
-  ffmpeg.setFfprobePath(ffprobeInstaller.path);
-  
   createWindow();
   
   // Setup rules directory
@@ -417,10 +420,27 @@ function getVideoResolution(filePath) {
         
         if (videoStream && videoStream.width && videoStream.height) {
           console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
+          
+          // 프레임 레이트 계산
+          let fps = 0;
+          if (videoStream.r_frame_rate) {
+            const [num, den] = videoStream.r_frame_rate.split('/');
+            fps = parseInt(num) / parseInt(den);
+          }
+          
+          // 총 프레임 수 계산
+          let frames = 0;
+          if (fps > 0 && videoStream.duration) {
+            frames = Math.round(fps * parseFloat(videoStream.duration));
+          } else if (videoStream.nb_frames) {
+            frames = parseInt(videoStream.nb_frames);
+          }
+          
           return resolve({ 
             width: videoStream.width, 
             height: videoStream.height,
-            duration: videoStream.duration // 추가 정보: 재생 시간(초)
+            duration: videoStream.duration, // 추가 정보: 재생 시간(초)
+            frames: frames  // 추가: 총 프레임 수
           });
         } else {
           console.log('No valid video stream found');
@@ -472,6 +492,17 @@ function estimateDimensionsByFileSize(filePath) {
     console.error('Error reading file stats:', error);
     // 기본 HD 해상도 반환
     return { width: 1280, height: 720 };
+  }
+}
+
+// 비디오 파일 정보 추출 함수 - 외부 호출용 인터페이스
+async function analyzeVideo(filePath) {
+  try {
+    // getVideoResolution을 호출하여 일관된 구현 사용
+    return await getVideoResolution(filePath);
+  } catch (error) {
+    console.error('FFprobe 분석 오류:', error);
+    return null;
   }
 }
 

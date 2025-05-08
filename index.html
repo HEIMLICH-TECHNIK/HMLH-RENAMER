@@ -34,7 +34,39 @@
             <input type="text" id="patternInput" placeholder="Format: {name}_{num}.{ext}" value="{name}">
           </div>
           <div class="hint">
-            <span>Variables: {name}, {ext}, {num}, {date}</span>
+            <span>Basic variables: {name}, {ext}, {num}, {date}</span>
+            <button id="togglePatternVarsBtn" class="btn-outline btn-small">More Variables ▼</button>
+          </div>
+          
+          <div class="pattern-extended-vars hint" id="patternExtendedVars" style="display:none;">
+            <h4>Media Variables:</h4>
+            <div class="var-list">
+              <div class="var-item"><span class="var">{width}, {height}</span> - Image/video dimensions</div>
+              <div class="var-item"><span class="var">{duration}, {duration_fmt}</span> - Video length in seconds, formatted time (HH:MM:SS)</div>
+              <div class="var-item"><span class="var">{frames}</span> - Total number of frames in video</div>
+              <div class="var-item"><span class="var">{is_image}, {is_video}</span> - Outputs "image" or "video" text</div>
+            </div>
+            
+            <h4>Conditional Variables:</h4>
+            <div class="var-list">
+              <div class="var-item"><span class="var">{if_image:text}</span> - Include text only for images</div>
+              <div class="var-item"><span class="var">{if_video:text}</span> - Include text only for videos</div>
+              <div class="var-item"><span class="var">{if_landscape:text}</span> - Include text only for landscape orientation</div>
+              <div class="var-item"><span class="var">{if_portrait:text}</span> - Include text only for portrait orientation</div>
+            </div>
+            
+            <h4>Format Variables:</h4>
+            <div class="var-list">
+              <div class="var-item"><span class="var">{upper_name}, {lower_name}</span> - Uppercase/lowercase filename</div>
+              <div class="var-item"><span class="var">{padnum3}</span> - 3-digit zero-padded number</div>
+            </div>
+            
+            <div class="example-small">
+              <div class="example-title">Examples:</div>
+              <code>{name}_{width}x{height}</code>
+              <code>{if_video:VIDEO_}{name}_{duration_fmt}</code>
+              <code>{if_image:{if_landscape:LANDSCAPE_}{if_portrait:PORTRAIT_}}{name}</code>
+            </div>
           </div>
           
           <!-- 날짜 포맷 설정 UI (기본적으로 숨겨져 있음) -->
@@ -188,6 +220,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
               <div class="var-item"><span class="var">index</span> - File index (0-based)</div>
               <div class="var-item"><span class="var">width, height</span> - Image width/height in pixels</div>
               <div class="var-item"><span class="var">duration</span> - Video duration in seconds</div>
+              <div class="var-item"><span class="var">frames</span> - Total number of frames in video</div>
               <div class="var-item"><span class="var">isImage</span> - True if file is image</div>
               <div class="var-item"><span class="var">isVideo</span> - True if file is video</div>
               <div class="var-item"><span class="var">date</span> - File creation date</div>
@@ -235,7 +268,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
         </div>
         
         <div class="sidebar-footer-version">
-          <span>© 2025 <a href="https://heimlich.studio" class="footer-link"> HEIMLICH®</a> <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER/releases" class="footer-link">Version 0.0.1</a></span>
+          <span>© 2025 <a href="https://heimlich.studio" class="footer-link"> HEIMLICH®</a> <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER/releases" class="footer-link">Version 0.1.0</a></span>
         </div>
       </div>
     </div>
@@ -339,9 +372,9 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
         <div class="modal-container">
           <div class="modal-header">
             <h3>Expression Examples</h3>
-            <button id="closeExpressionExamplesBtn" class="btn-close">&times;</button>
+            <button id="closeExpressionExamplesBtn" class="btn-close modal-close-btn">&times;</button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body examples-modal-body">
             <div class="examples-container">
               <div class="example-category">
                 <h4>Basic Usage</h4>
@@ -405,6 +438,165 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                   </div>
                 </div>
               </div>
+              
+              <div class="example-category">
+                <h4>VFX Workflow</h4>
+                <div class="example-items">
+                  <div class="example-item" data-expression="'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext">
+                    <div class="example-name">Shot Versioning</div>
+                    <code>'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Creates shot number with version (shot_0001_v001)</div>
+                  </div>
+                  <div class="example-item" data-expression="name.split('_')[0] + '_' + name.split('_')[1] + '_' + lower(cond(isImage, 'beauty', 'comp')) + '.' + fileext">
+                    <div class="example-name">Render Pass Naming</div>
+                    <code>name.split('_')[0] + '_' + name.split('_')[1] + '_' + lower(cond(isImage, 'beauty', 'comp')) + '.' + fileext</code>
+                    <div class="example-desc">Adds render pass type to shot structure</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext">
+                    <div class="example-name">Frame Range</div>
+                    <code>name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext</code>
+                    <div class="example-desc">Adds frame range to filename (e.g. shot_fr0001-0100)</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext">
+                    <div class="example-name">Frame Rate</div>
+                    <code>name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext</code>
+                    <div class="example-desc">Adds estimated frame rate to filename based on frames/duration</div>
+                  </div>
+                  <div class="example-item" data-expression="'proj_' + name + '_' + width + 'x' + height + '_' + padnum(index + 1, 4) + '.' + fileext">
+                    <div class="example-name">Project Asset Naming</div>
+                    <code>'proj_' + name + '_' + width + 'x' + height + '_' + padnum(index + 1, 4) + '.' + fileext</code>
+                    <div class="example-desc">Creates project-based asset name with resolution</div>
+                  </div>
+                  <div class="example-item" data-expression="substr(name, 0, 3) + '_' + cond(width >= 3840, '4K', cond(width >= 1920, '2K', 'HD')) + '_v' + padnum(index + 1, 3) + '.' + fileext">
+                    <div class="example-name">Resolution-Based Versioning</div>
+                    <code>substr(name, 0, 3) + '_' + cond(width >= 3840, '4K', cond(width >= 1920, '2K', 'HD')) + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Names files based on prefix, resolution and version</div>
+                  </div>
+                  <div class="example-item" data-expression="'COMP_' + name + '_' + date.replace(/-/g, '') + '_' + cond(index < 9, 'WIP0' + (index + 1), 'WIP' + (index + 1)) + '.' + fileext">
+                    <div class="example-name">VFX Work-in-Progress</div>
+                    <code>'COMP_' + name + '_' + date.replace(/-/g, '') + '_' + cond(index < 9, 'WIP0' + (index + 1), 'WIP' + (index + 1)) + '.' + fileext</code>
+                    <div class="example-desc">Creates WIP file naming with date stamp</div>
+                  </div>
+                  <div class="example-item" data-expression="'SQ' + padnum(index+1, 2) + '_' + name + '_KEY' + padnum(Math.round(frames/5), 3) + '.' + fileext">
+                    <div class="example-name">Keyframe Markers</div>
+                    <code>'SQ' + padnum(index+1, 2) + '_' + name + '_KEY' + padnum(Math.round(frames/5), 3) + '.' + fileext</code>
+                    <div class="example-desc">Names files to represent keyframes in animation sequence</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="example-category">
+                <h4>2D/3D Production</h4>
+                <div class="example-items">
+                  <div class="example-item" data-expression="'sc' + padnum(index + 1, 3) + '_sh' + padnum(1, 4) + '_' + name + '_v' + padnum(1, 3) + '.' + fileext">
+                    <div class="example-name">Scene/Shot Organization</div>
+                    <code>'sc' + padnum(index + 1, 3) + '_sh' + padnum(1, 4) + '_' + name + '_v' + padnum(1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Complete scene/shot/element/version structure</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + cond(fileext === '.exr', 'multipass', 'single') + '_v' + padnum(index + 1, 3) + '.' + fileext">
+                    <div class="example-name">EXR Pass Identifier</div>
+                    <code>name + '_' + cond(fileext === '.exr', 'multipass', 'single') + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Identifies EXR files as multipass or single layer</div>
+                  </div>
+                  <div class="example-item" data-expression="'ae_' + name + '_' + date.replace(/-/g, '') + '_r' + padnum(index + 1, 2) + '.' + fileext">
+                    <div class="example-name">After Effects Project</div>
+                    <code>'ae_' + name + '_' + date.replace(/-/g, '') + '_r' + padnum(index + 1, 2) + '.' + fileext</code>
+                    <div class="example-desc">After Effects project naming with date and revision</div>
+                  </div>
+                  <div class="example-item" data-expression="name.replace(/\s+/g, '_') + '_' + cond(fileext.toLowerCase() === '.blend', '3d', '2d') + '_asset_v' + padnum(index + 1, 3) + '.' + fileext">
+                    <div class="example-name">2D/3D Asset Naming</div>
+                    <code>name.replace(/\s+/g, '_') + '_' + cond(fileext.toLowerCase() === '.blend', '3d', '2d') + '_asset_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Categorizes assets as 2D or 3D based on extension</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + cond(width/height > 2, 'pano', cond(width/height < 1, 'vert', 'std')) + '.' + fileext">
+                    <div class="example-name">Panoramic/Vertical Identifier</div>
+                    <code>name + '_' + cond(width/height > 2, 'pano', cond(width/height < 1, 'vert', 'std')) + '.' + fileext</code>
+                    <div class="example-desc">Identifies panoramic, vertical or standard aspect ratios</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="example-category">
+                <h4>Nuke/Compositing</h4>
+                <div class="example-items">
+                  <div class="example-item" data-expression="'comp_' + name + '_' + ['beauty', 'diffuse', 'spec', 'shadow', 'ao'][index % 5] + '.' + fileext">
+                    <div class="example-name">Render Passes</div>
+                    <code>'comp_' + name + '_' + ['beauty', 'diffuse', 'spec', 'shadow', 'ao'][index % 5] + '.' + fileext</code>
+                    <div class="example-desc">Names render passes for compositing workflow</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + cond(fileext === '.nk', 'nuke_v', 'plate_v') + padnum(index + 1, 3) + '.' + fileext">
+                    <div class="example-name">Nuke Script Versioning</div>
+                    <code>name + '_' + cond(fileext === '.nk', 'nuke_v', 'plate_v') + padnum(index + 1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Versions Nuke scripts and plates differently</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(fileext === '.dpx' || fileext === '.exr', 'plate_', 'comp_') + name + '_' + width + 'x' + height + '.' + fileext">
+                    <div class="example-name">Plate/Comp Distinction</div>
+                    <code>cond(fileext === '.dpx' || fileext === '.exr', 'plate_', 'comp_') + name + '_' + width + 'x' + height + '.' + fileext</code>
+                    <div class="example-desc">Differentiates between plates and comps based on extension</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + padnum(index * 10, 4) + '_' + cond(isImage, 'frame', 'anim') + '.' + fileext">
+                    <div class="example-name">Frame Numbering</div>
+                    <code>name + '_' + padnum(index * 10, 4) + '_' + cond(isImage, 'frame', 'anim') + '.' + fileext</code>
+                    <div class="example-desc">Creates frame numbers for image sequences</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + ['matte', 'key', 'roto', 'mask', 'alpha'][index % 5] + '_v' + padnum(1, 3) + '.' + fileext">
+                    <div class="example-name">Matte Elements</div>
+                    <code>name + '_' + ['matte', 'key', 'roto', 'mask', 'alpha'][index % 5] + '_v' + padnum(1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Names different matte elements for compositing</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_seq' + padnum(Math.floor(frames/24), 3) + '_frames' + padnum(frames, 5) + '.' + fileext">
+                    <div class="example-name">Sequence Length</div>
+                    <code>name + '_seq' + padnum(Math.floor(frames/24), 3) + '_frames' + padnum(frames, 5) + '.' + fileext</code>
+                    <div class="example-desc">Adds sequence length (in seconds) and total frames to filename</div>
+                  </div>
+                  <div class="example-item" data-expression="name + '_' + cond(frames > 1000, 'longseq', cond(frames > 100, 'midseq', 'shortseq')) + '_v' + padnum(index + 1, 3) + '.' + fileext">
+                    <div class="example-name">Sequence Length Category</div>
+                    <code>name + '_' + cond(frames > 1000, 'longseq', cond(frames > 100, 'midseq', 'shortseq')) + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                    <div class="example-desc">Categorizes sequences as short/mid/long based on frame count</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="example-category">
+                <h4>Video Operations</h4>
+                <div class="example-items">
+                  <div class="example-item" data-expression="cond(isVideo, name + '_' + formatTime(duration), name) + '.' + fileext">
+                    <div class="example-name">Add Video Duration</div>
+                    <code>cond(isVideo, name + '_' + formatTime(duration), name) + '.' + fileext</code>
+                    <div class="example-desc">Adds formatted duration (HH:MM:SS) to video filenames</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(isVideo, name + '_frames' + frames, name) + '.' + fileext">
+                    <div class="example-name">Add Frame Count</div>
+                    <code>cond(isVideo, name + '_frames' + frames, name) + '.' + fileext</code>
+                    <div class="example-desc">Adds total frame count to video filenames</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(isVideo, name + '_' + formatTime(duration) + '_' + padnum(frames, 5), name) + '.' + fileext">
+                    <div class="example-name">Duration and Frames</div>
+                    <code>cond(isVideo, name + '_' + formatTime(duration) + '_' + padnum(frames, 5), name) + '.' + fileext</code>
+                    <div class="example-desc">Adds both duration and frame count to video filenames</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(isVideo, cond(duration < 60, 'SHORT_', cond(duration < 300, 'MEDIUM_', 'LONG_')), '') + name + '.' + fileext">
+                    <div class="example-name">Duration Category Prefix</div>
+                    <code>cond(isVideo, cond(duration < 60, 'SHORT_', cond(duration < 300, 'MEDIUM_', 'LONG_')), '') + name + '.' + fileext</code>
+                    <div class="example-desc">Categorizes videos as SHORT/MEDIUM/LONG based on duration</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(isVideo, name + '_' + width + 'x' + height, name) + '.' + fileext">
+                    <div class="example-name">Add Video Resolution</div>
+                    <code>cond(isVideo, name + '_' + width + 'x' + height, name) + '.' + fileext</code>
+                    <div class="example-desc">Adds width×height to video filenames</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(isVideo, cond(width >= 3840, '4K_', cond(width >= 1920, 'HD_', 'SD_')), '') + name + '.' + fileext">
+                    <div class="example-name">Video Quality Prefix</div>
+                    <code>cond(isVideo, cond(width >= 3840, '4K_', cond(width >= 1920, 'HD_', 'SD_')), '') + name + '.' + fileext</code>
+                    <div class="example-desc">Adds quality prefix (4K/HD/SD) based on resolution</div>
+                  </div>
+                  <div class="example-item" data-expression="cond(isVideo, 'VID_' + formatTime(duration).replace(/:/g, '') + '_' + name, name) + '.' + fileext">
+                    <div class="example-name">Video Duration Code</div>
+                    <code>cond(isVideo, 'VID_' + formatTime(duration).replace(/:/g, '') + '_' + name, name) + '.' + fileext</code>
+                    <div class="example-desc">Adds compact duration code (HHMMSS) to video filenames</div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div id="copyStatus" class="copy-status hidden">Copied to clipboard!</div>
           </div>
@@ -413,6 +605,6 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
     </div>
   </div>
   
-  <script src="renderer.js"></script>
+  <script src="js/renderer.js" type="module"></script>
 </body>
 </html> 

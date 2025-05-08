@@ -1,5 +1,3 @@
-# RENAMER by HEIMLICH®
-
 ![RENAMER by HEIMLICH®](assets/HEIMLICH_TYPOLOGO.svg)
 
 A modern, powerful file renaming utility with an intuitive interface designed for efficiency and flexibility.

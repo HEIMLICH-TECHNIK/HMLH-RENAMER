@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RENAMER by HEIMLICH®</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Left sidebar with rename settings -->
+    <div class="sidebar">
+      <div class="logo">
+        <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="FILE RENAMER by HEIMLICH" class="logo-image">
+      </div>
+      
+      <div class="rename-settings">
+        <div class="method-tabs">
+          <div class="tab active" data-method="pattern">Pattern</div>
+          <div class="tab" data-method="replace">Replace</div>
+          <div class="tab" data-method="regex">Regex</div>
+          <div class="tab" data-method="word">Word Select</div>
+        </div>
+        
+        <!-- Pattern Method -->
+        <div class="method-content active" id="pattern-panel">
+          <div class="input-group">
+            <input type="text" id="patternInput" placeholder="Format: {name}_{num}.{ext}" value="{name}">
+          </div>
+          <div class="hint">
+            <span>Variables: {name}, {ext}, {num}, {date}</span>
+          </div>
+        </div>
+        
+        <!-- Find & Replace Method -->
+        <div class="method-content" id="replace-panel">
+          <div class="input-group">
+            <input type="text" id="findText" placeholder="Find text">
+          </div>
+          <div class="input-group">
+            <input type="text" id="replaceText" placeholder="Replace with">
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox">
+              <input type="checkbox" id="caseSensitive">
+              <span>Case sensitive</span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- Regex Method -->
+        <div class="method-content" id="regex-panel">
+          <div class="input-group">
+            <input type="text" id="regexPattern" placeholder="Regular expression">
+          </div>
+          <div class="input-group">
+            <input type="text" id="regexReplacement" placeholder="Replacement ($1, $2...)">
+          </div>
+        </div>
+        
+        <!-- Word Selection Method -->
+        <div class="method-content" id="word-panel">
+          <div class="hint">
+            <span>Select words from filenames to modify</span>
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox">
+              <input type="checkbox" id="applyToAllFiles">
+              <span>Apply to all files with same patterns</span>
+            </label>
+          </div>
+          <div class="input-group" id="wordRulesContainer">
+            <!-- Word rules will be dynamically added here -->
+          </div>
+          <button id="addWordRuleBtn" class="btn-outline">+ Add Rule</button>
+        </div>
+        
+        <div class="sidebar-actions">
+          <button id="applyBtn" class="btn-primary" disabled>Rename Files</button>
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <button id="clearBtn" class="btn-text">Clear All</button>
+      </div>
+      <div class="sidebar-footer-text">
+        <span></span>
+      </div>
+      <div class="sidebar-footer-version">
+        <span>© 2025 <a href="https://heimlich.studio" class="footer-link"> HEIMLICH®</a> <a href="https://github.com/HEIMLICHSTUDIO/HMLH-RENAMER/releases" class="footer-link">Version 0.0.1</a></span>
+      </div>
+    </div>
+    
+    <!-- Right content area -->
+    <div class="main-content" id="dropArea">
+      <div class="content-header">
+        <h2>Files</h2>
+        <div class="file-count">
+          <span id="fileCount">0</span> files
+        </div>
+      </div>
+      
+      <div class="content-body">
+        <!-- Empty state / Drop indicator -->
+        <div class="empty-drop-area" id="emptyDropArea">
+          <div class="drop-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 4V16M12 16L8 12M12 16L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 20H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p>Drop files here to rename them</p>
+          <button id="fileSelectBtn" class="btn-outline">Select Files</button>
+        </div>
+        
+        <!-- Files with preview integrated -->
+        <div class="files-preview" id="filesPreview">
+          <!-- Preview takes full space now -->
+          <div class="preview-container">
+            <div class="preview-header">
+              <h3>Preview</h3>
+            </div>
+            <div id="previewArea" class="preview-area"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Results overlay -->
+      <div id="resultArea" class="result-area hidden">
+        <div class="result-container">
+          <div class="result-header">
+            <h3>Results</h3>
+            <button id="closeResultsBtn" class="btn-close">&times;</button>
+          </div>
+          <div id="resultList" class="result-list"></div>
+          <div class="result-actions">
+            <button id="doneBtn" class="btn-primary">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="renderer.js"></script>
+</body>
+</html> 

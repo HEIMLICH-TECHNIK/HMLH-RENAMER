@@ -11,10 +11,33 @@ const ffprobe = require('ffprobe');
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
 
-// ffprobe 경로 설정
-ffmpeg.setFfprobePath(ffprobeInstaller.path);
-// ffprobe 경로 저장
-const ffprobePath = ffprobeInstaller.path;
+// ffprobe 경로 설정 (개발 환경과 프로덕션 환경 모두 지원)
+let ffprobePath;
+if (app.isPackaged) {
+  // 프로덕션 환경에서는 extraResources에 복사된 경로 사용
+  const platform = process.platform;
+  const ext = platform === 'win32' ? '.exe' : '';
+  ffprobePath = path.join(process.resourcesPath, 'ffprobe', `ffprobe${ext}`);
+  
+  // Windows에서는 실행 권한 필요 없음
+  if (platform !== 'win32') {
+    try {
+      // macOS 및 Linux에서 실행 권한 부여
+      fs.chmodSync(ffprobePath, '755');
+    } catch (error) {
+      console.error('Failed to set executable permissions on ffprobe:', error);
+    }
+  }
+  
+  console.log('Production ffprobe path:', ffprobePath);
+} else {
+  // 개발 환경에서는 ffprobe-installer 경로 사용
+  ffprobePath = ffprobeInstaller.path;
+  console.log('Development ffprobe path:', ffprobePath);
+}
+
+// ffmpeg에 ffprobe 경로 설정
+ffmpeg.setFfprobePath(ffprobePath);
 
 function createWindow() {
   // Create the browser window
@@ -408,49 +431,52 @@ async function handleGetImageSize(event, filePath) {
 // 비디오 해상도 가져오기 함수
 function getVideoResolution(filePath) {
   return new Promise((resolve, reject) => {
-    ffmpeg.ffprobe(filePath, (err, metadata) => {
-      if (err) {
-        console.error('Error in ffprobe:', err);
-        return reject(err);
-      }
-      
-      try {
-        // 비디오 스트림 찾기
-        const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
-        
-        if (videoStream && videoStream.width && videoStream.height) {
-          console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
+    // ffprobe 모듈 직접 사용
+    ffprobe(filePath, { path: ffprobePath })
+      .then(metadata => {
+        try {
+          // 비디오 스트림 찾기
+          const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
           
-          // 프레임 레이트 계산
-          let fps = 0;
-          if (videoStream.r_frame_rate) {
-            const [num, den] = videoStream.r_frame_rate.split('/');
-            fps = parseInt(num) / parseInt(den);
+          if (videoStream && videoStream.width && videoStream.height) {
+            console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
+            
+            // 프레임 레이트 계산
+            let fps = 0;
+            if (videoStream.r_frame_rate) {
+              const [num, den] = videoStream.r_frame_rate.split('/');
+              fps = parseInt(num) / parseInt(den);
+            }
+            
+            // 총 프레임 수 계산
+            let frames = 0;
+            if (fps > 0 && videoStream.duration) {
+              frames = Math.round(fps * parseFloat(videoStream.duration));
+            } else if (videoStream.nb_frames) {
+              frames = parseInt(videoStream.nb_frames);
+            }
+            
+            console.log(`Video FPS: ${fps}, Duration: ${videoStream.duration}s, Total frames: ${frames}`);
+            
+            return resolve({ 
+              width: videoStream.width, 
+              height: videoStream.height,
+              duration: videoStream.duration, // 추가 정보: 재생 시간(초)
+              frames: frames  // 추가: 총 프레임 수
+            });
+          } else {
+            console.log('No valid video stream found');
+            return reject(new Error('No valid video stream found'));
           }
-          
-          // 총 프레임 수 계산
-          let frames = 0;
-          if (fps > 0 && videoStream.duration) {
-            frames = Math.round(fps * parseFloat(videoStream.duration));
-          } else if (videoStream.nb_frames) {
-            frames = parseInt(videoStream.nb_frames);
-          }
-          
-          return resolve({ 
-            width: videoStream.width, 
-            height: videoStream.height,
-            duration: videoStream.duration, // 추가 정보: 재생 시간(초)
-            frames: frames  // 추가: 총 프레임 수
-          });
-        } else {
-          console.log('No valid video stream found');
-          return reject(new Error('No valid video stream found'));
+        } catch (parseErr) {
+          console.error('Error parsing ffprobe result:', parseErr);
+          return reject(parseErr);
         }
-      } catch (parseErr) {
-        console.error('Error parsing ffprobe result:', parseErr);
-        return reject(parseErr);
-      }
-    });
+      })
+      .catch(err => {
+        console.error('Error in ffprobe:', err);
+        reject(err);
+      });
   });
 }
 

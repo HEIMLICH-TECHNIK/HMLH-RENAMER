@@ -1,26 +1,40 @@
 {
   "name": "hmlh_namer",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Rename files with a simple interface by HEIMLICH®",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "electron-rebuild -f -w sharp"
+    "postinstall": "electron-builder install-app-deps && electron-rebuild -f -w sharp ffprobe"
   },
   "build": {
     "appId": "com.heimlich.renamer",
     "productName": "RENAMER by HEIMLICH®",
     "mac": {
-      "icon": "assets/app-icon.icns"
+      "icon": "assets/app-icon.icns",
+      "extraResources": [
+        {
+          "from": "node_modules/@ffprobe-installer/darwin-arm64/ffprobe",
+          "to": "ffprobe/ffprobe"
+        }
+      ]
     },
     "win": {
       "icon": "assets/app-icon.ico"
     },
     "linux": {
       "icon": "assets/app-icon.png"
-    }
+    },
+    "files": [
+      "**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!**/node_modules/*/{.editorconfig,.eslintrc.json,.eslintrc,.eslintignore,.gitattributes,.github,.npmignore,.travis.yml,.yarn-integrity,.yarnclean,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log}"
+    ]
   },
   "keywords": [
     "file",

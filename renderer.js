@@ -1572,8 +1572,8 @@ function showToastWithDetails(message, type = 'info') {
       clearTimeout(toastTimeout);
       toastTimeout = null;
     }
-  }
-  
+}
+
   // 새 토스트 생성
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;

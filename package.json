@@ -22,7 +22,13 @@
       ]
     },
     "win": {
-      "icon": "assets/app-icon.ico"
+      "icon": "assets/app-icon.ico",
+      "extraResources": [
+        {
+          "from": "node_modules/@ffprobe-installer/win32-x64/ffprobe.exe",
+          "to": "ffprobe/ffprobe.exe"
+        }
+      ]
     },
     "linux": {
       "icon": "assets/app-icon.png"

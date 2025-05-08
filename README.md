@@ -1,40 +1,74 @@
-# 파일 이름 변경 도구
+# RENAMER by HEIMLICH®
 
-간단한 파일 이름 변경 도구입니다. 파일을 드래그 앤 드롭하여 선택하고 원하는 규칙에 따라 이름을 변경할 수 있습니다.
+![RENAMER by HEIMLICH®](assets/HEIMLICH_TYPOLOGO.svg)
 
-## 기능
+A modern, powerful file renaming utility with an intuitive interface designed for efficiency and flexibility.
 
-- 파일 드래그 앤 드롭 또는 파일 선택 대화상자
-- 선택한 파일 목록 표시
-- 패턴을 사용한 이름 변경 규칙 지정
-- 실시간 이름 변경 미리보기
-- 파일 이름 변경 실행 및 결과 확인
+## Features
 
-## 실행 방법
+### Multiple Renaming Methods
+- **Pattern-based**: Use variables like `{name}`, `{ext}`, `{num}`, `{date}`
+- **Find & Replace**: Simple text substitution with case sensitivity options
+- **Regular Expressions**: Advanced pattern matching and capturing groups
+- **Word Selection**: Target specific parts of filenames
+- **Sequential Numbering**: Add customizable numbering with sorting options
+- **Expression-based**: Use Houdini-like expressions for complex renaming logic
 
-1. Node.js가 설치되어 있어야 합니다.
-2. 다음 명령어로 의존성을 설치합니다:
-   ```
-   npm install
-   ```
-3. 애플리케이션을 실행합니다:
-   ```
-   npm start
-   ```
+### Media Intelligence
+- Automatically extract and use image dimensions, video duration, and frame counts
+- Conditional renaming based on media type (image vs video)
+- Special format support for EXR, DPX, TIF and professional video formats
 
-## 사용 방법
+### Professional Workflow
+- Real-time preview before applying changes
+- Save and load custom renaming rules
+- Full undo/redo history
+- Batch operations for multiple files
+- Drag-and-drop interface with visual feedback
 
-1. 파일을 드래그 앤 드롭하거나 '파일 선택' 버튼을 클릭하여 파일을 선택합니다.
-2. 이름 변경 규칙 입력란에 원하는 패턴을 입력합니다:
-   - `{name}`: 원본 파일명 (확장자 제외)
-   - `{ext}`: 확장자
-3. 미리보기 영역에서 변경될 이름을 확인합니다.
-4. '이름 변경 적용' 버튼을 클릭하여 변경사항을 적용합니다.
-5. 결과 영역에서 처리 결과를 확인합니다.
+## Installation
 
-## 예시 패턴
+### Download the installer
+- Windows: `RENAMER by HEIMLICH® Setup x.x.x.exe`
+- macOS: `RENAMER by HEIMLICH®-x.x.x.dmg`
+- Linux: `RENAMER by HEIMLICH®-x.x.x.AppImage`
 
-- `prefix_{name}`: 접두사 추가
-- `{name}_suffix`: 접미사 추가
-- `new_name`: 모든 파일의 이름을 변경 (확장자는 유지)
-- `{name}.새확장자`: 확장자 변경 
+### For developers
+1. Clone the repository: `git clone https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER.git`
+2. Install dependencies: `npm install`
+3. Run in development mode: `npm start`
+4. Build for distribution: `npm run build`
+
+## Usage
+
+1. Drag and drop files or click "Select Files"
+2. Choose a renaming method from the tabs
+3. Configure renaming options
+4. Preview changes in real-time
+5. Click "Rename Files" to apply changes
+6. Review results and use undo if needed
+
+## Advanced Usage Examples
+
+### Pattern Variables
+- Basic: `{name}`, `{ext}`, `{num}`, `{date}`
+- Media: `{width}`, `{height}`, `{duration}`, `{frames}`
+- Conditional: `{if_image:text}`, `{if_video:text}`, `{if_landscape:text}`, `{if_portrait:text}`
+- Format: `{upper_name}`, `{lower_name}`, `{padnum3}`
+
+### Expression Mode
+Use JavaScript-like expressions with specialized functions:
+```javascript
+name + '_' + padnum(index + 1, 3) + '.' + fileext
+cond(isImage, cond(width > height, 'landscape_', 'portrait_'), '') + name + '.' + fileext
+'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext
+```
+
+## License
+
+ISC License © 2025 HEIMLICH®
+
+## Contact
+
+- Website: [heimlich.studio](https://heimlich.studio)
+- Repository: [GitHub](https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER) 

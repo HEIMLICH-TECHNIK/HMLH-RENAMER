@@ -356,7 +356,7 @@ async function handleGetImageSize(event, filePath) {
 
     // 이미지 및 비디오 확장자 확인
     const isImage = /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(filePath);
-    const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp)$/i.test(filePath);
+    const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(filePath);
     const isSpecialImage = /\.(exr|dpx|tiff?|psd|hdr)$/i.test(filePath);
     
     if (!isImage && !isVideo) {
@@ -428,56 +428,413 @@ async function handleGetImageSize(event, filePath) {
   }
 }
 
+// 컬러스페이스 코드를 사용자 친화적인 이름으로 변환
+function friendlyColorspaceName(code) {
+  const colorspaceMap = {
+    // 표준 컬러스페이스
+    'bt709': 'BT.709',
+    'bt470bg': 'BT.601',
+    'smpte170m': 'BT.601',
+    'bt2020nc': 'BT.2020',
+    'bt2020': 'BT.2020',
+    'smpte2085': 'SMPTE 2085',
+    'srgb': 'sRGB',
+    'iec61966-2-1': 'sRGB',
+    'iec61966-2-4': 'xvYCC',
+    'bt470m': 'NTSC',
+    
+    // ProRes 코덱 특수 컬러스페이스 매핑
+    'gbr': 'BT.709',  // ProRes는 보통 BT.709 사용
+    'gbrp': 'BT.709',
+    'gbra': 'BT.709',
+    'rgb': 'BT.709',
+    
+    // ARRI 컬러스페이스
+    'arri wide gamut': 'ARRI Wide Gamut',
+    'awg': 'ARRI Wide Gamut',
+    'arri_wide_gamut': 'ARRI Wide Gamut',
+    'awg3': 'ARRI Wide Gamut 3',
+    'awg4': 'ARRI Wide Gamut 4',
+    'arri wide gamut 4': 'ARRI Wide Gamut 4',
+    'arri_wide_gamut_4': 'ARRI Wide Gamut 4',
+    
+    // RED 컬러스페이스
+    'red wide gamut': 'RED Wide Gamut',
+    'redwidegamut': 'RED Wide Gamut',
+    'red_wide_gamut': 'RED Wide Gamut',
+    'rwg': 'RED Wide Gamut',
+    'dragon color': 'Dragon Color',
+    'dragoncolor': 'Dragon Color',
+    'dragon color 2': 'Dragon Color 2',
+    'dragoncolor2': 'Dragon Color 2',
+    'red color': 'RED Color',
+    'redcolor': 'RED Color',
+    'red color 2': 'RED Color 2',
+    'redcolor2': 'RED Color 2',
+    'red color 3': 'RED Color 3',
+    'redcolor3': 'RED Color 3',
+    'red color 4': 'RED Color 4',
+    'redcolor4': 'RED Color 4',
+    'redcolor5': 'RED Color 5',
+    'redcolor6': 'RED Color 6',
+    
+    // Sony 컬러스페이스
+    'sgamut': 'S-Gamut',
+    's-gamut': 'S-Gamut',
+    's_gamut': 'S-Gamut',
+    'sgamut3': 'S-Gamut3',
+    's-gamut3': 'S-Gamut3', 
+    's_gamut3': 'S-Gamut3',
+    'sgamut3.cine': 'S-Gamut3.Cine',
+    's-gamut3.cine': 'S-Gamut3.Cine',
+    's_gamut3_cine': 'S-Gamut3.Cine',
+    'venice': 'VENICE',
+    
+    // Canon 컬러스페이스
+    'cinema gamut': 'Cinema Gamut',
+    'cinemagamut': 'Cinema Gamut',
+    'cinema_gamut': 'Cinema Gamut',
+    'canon log': 'Canon Log',
+    'canon_log': 'Canon Log',
+    'canonlog': 'Canon Log',
+    
+    // Panasonic 컬러스페이스
+    'v-gamut': 'V-Gamut',
+    'vgamut': 'V-Gamut',
+    'v_gamut': 'V-Gamut',
+    
+    // Blackmagic 컬러스페이스
+    'blackmagic wide gamut': 'Blackmagic Wide Gamut',
+    'bmdwg': 'Blackmagic Wide Gamut',
+    'blackmagic_wide_gamut': 'Blackmagic Wide Gamut',
+    'blackmagic design film': 'Blackmagic Design Film',
+    'blackmagic_design_film': 'Blackmagic Design Film',
+    
+    // ACES 컬러스페이스
+    'aces': 'ACES',
+    'acescg': 'ACEScg',
+    'aces cg': 'ACEScg',
+    'ap0': 'ACES AP0',
+    'ap1': 'ACES AP1',
+    
+    // 기타
+    'alexa wide gamut': 'ALEXA Wide Gamut',
+    'dcip3': 'DCI-P3',
+    'dci-p3': 'DCI-P3',
+    'dci_p3': 'DCI-P3',
+    'p3': 'DCI-P3',
+    'p3-d65': 'P3-D65',
+    'p3_d65': 'P3-D65',
+    'xyz': 'CIE XYZ',
+    'unknown': 'unknown'
+  };
+  
+  if (!code) return 'unknown';
+  return colorspaceMap[code.toLowerCase()] || code;
+}
+
+// 컬러 트랜스퍼 코드를 사용자 친화적인 이름으로 변환
+function friendlyTransferName(code) {
+  const transferMap = {
+    // 표준 트랜스퍼
+    'bt709': 'BT.709',
+    'bt2020-10': 'BT.2020 (10-bit)',
+    'bt2020-12': 'BT.2020 (12-bit)',
+    'gamma22': 'Gamma 2.2',
+    'gamma28': 'Gamma 2.8',
+    'smpte2084': 'PQ (HDR10)',
+    'smpte428': 'SMPTE ST 428',
+    'arib-std-b67': 'HLG (HDR)',
+    'srgb': 'sRGB',
+    'log': 'Log',
+    'log100': 'Log100',
+    'log316': 'Log316',
+    'bt1361e': 'BT.1361',
+    'iec61966-2-1': 'sRGB',
+    'iec61966-2-4': 'xvYCC',
+    'linear': 'Linear',
+    
+    // 특수 값 매핑
+    'reserved': 'BT.709',  // 대부분의 ProRes는 BT.709 감마
+    'unspecified': 'BT.709',
+    'unknown': 'BT.709',
+    
+    // ARRI 로그
+    'logc': 'ARRI LogC',
+    'arri logc': 'ARRI LogC',
+    'logc3': 'ARRI LogC3',
+    'arri logc3': 'ARRI LogC3',
+    'logc4': 'ARRI LogC4',
+    'arri logc4': 'ARRI LogC4',
+    'arri_logc': 'ARRI LogC',
+    'arri_logc3': 'ARRI LogC3',
+    'arri_logc4': 'ARRI LogC4',
+    // ARRI LogC4 특수 코드 (ALEXA 35 카메라)
+    '0E17010204020000': 'ARRI LogC4',
+    
+    // RED 로그
+    'redlog': 'RED Log',
+    'red log': 'RED Log',
+    'red_log': 'RED Log',
+    'redlogfilm': 'RED Log Film',
+    'red log film': 'RED Log Film',
+    'red_log_film': 'RED Log Film',
+    'log3g10': 'RED Log3G10',
+    'red log3g10': 'RED Log3G10',
+    'red_log3g10': 'RED Log3G10',
+    'log3g12': 'RED Log3G12',
+    'red log3g12': 'RED Log3G12',
+    'red_log3g12': 'RED Log3G12',
+    
+    // Sony 로그
+    'slog': 'Sony S-Log',
+    's-log': 'Sony S-Log',
+    's_log': 'Sony S-Log',
+    'slog2': 'Sony S-Log2',
+    's-log2': 'Sony S-Log2',
+    's_log2': 'Sony S-Log2',
+    'slog3': 'Sony S-Log3',
+    's-log3': 'Sony S-Log3',
+    's_log3': 'Sony S-Log3',
+    
+    // Canon 로그
+    'canonlog': 'Canon Log',
+    'canon log': 'Canon Log',
+    'canon_log': 'Canon Log',
+    'canonlog2': 'Canon Log 2',
+    'canon log 2': 'Canon Log 2',
+    'canon_log2': 'Canon Log 2',
+    'canonlog3': 'Canon Log 3',
+    'canon log 3': 'Canon Log 3',
+    'canon_log3': 'Canon Log 3',
+    
+    // Panasonic 로그
+    'vlog': 'Panasonic V-Log',
+    'v-log': 'Panasonic V-Log',
+    'v_log': 'Panasonic V-Log',
+    'v-log l': 'Panasonic V-Log L',
+    'vlogl': 'Panasonic V-Log L',
+    
+    // Blackmagic 로그
+    'bmdfilm': 'Blackmagic Film',
+    'blackmagicfilm': 'Blackmagic Film',
+    'blackmagic film': 'Blackmagic Film',
+    'blackmagic_film': 'Blackmagic Film',
+    'braw': 'Blackmagic RAW',
+    'blackmagic raw': 'Blackmagic RAW',
+    'blackmagic_raw': 'Blackmagic RAW',
+    
+    // ACES 로그
+    'acescc': 'ACES CC',
+    'aces cc': 'ACES CC',
+    'aces_cc': 'ACES CC',
+    'acescct': 'ACES CCT',
+    'aces cct': 'ACES CCT',
+    'aces_cct': 'ACES CCT',
+    'aceslog': 'ACES Log',
+    'aces log': 'ACES Log',
+    'aces_log': 'ACES Log',
+    
+    // 기타
+    'filmic': 'Filmic',
+    'cineon': 'Cineon',
+    'davinci wide gamut': 'DaVinci Wide Gamut',
+    'davinci_wide_gamut': 'DaVinci Wide Gamut',
+    'filmlight t-log': 'FilmLight T-Log',
+    'filmlight_tlog': 'FilmLight T-Log',
+    'unknown': 'unknown'
+  };
+  
+  if (!code) return 'unknown';
+  return transferMap[code.toLowerCase()] || code;
+}
+
 // 비디오 해상도 가져오기 함수
 function getVideoResolution(filePath) {
-  return new Promise((resolve, reject) => {
-    // ffprobe 모듈 직접 사용
-    ffprobe(filePath, { path: ffprobePath })
-      .then(metadata => {
-        try {
-          // 비디오 스트림 찾기
-          const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
-          
-          if (videoStream && videoStream.width && videoStream.height) {
-            console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
-            
-            // 프레임 레이트 계산
-            let fps = 0;
-            if (videoStream.r_frame_rate) {
-              const [num, den] = videoStream.r_frame_rate.split('/');
-              fps = parseInt(num) / parseInt(den);
-            }
-            
-            // 총 프레임 수 계산
-            let frames = 0;
-            if (fps > 0 && videoStream.duration) {
-              frames = Math.round(fps * parseFloat(videoStream.duration));
-            } else if (videoStream.nb_frames) {
-              frames = parseInt(videoStream.nb_frames);
-            }
-            
-            console.log(`Video FPS: ${fps}, Duration: ${videoStream.duration}s, Total frames: ${frames}`);
-            
-            return resolve({ 
-              width: videoStream.width, 
-              height: videoStream.height,
-              duration: videoStream.duration, // 추가 정보: 재생 시간(초)
-              frames: frames  // 추가: 총 프레임 수
-            });
-          } else {
-            console.log('No valid video stream found');
-            return reject(new Error('No valid video stream found'));
-          }
-        } catch (parseErr) {
-          console.error('Error parsing ffprobe result:', parseErr);
-          return reject(parseErr);
-        }
-      })
-      .catch(err => {
-        console.error('Error in ffprobe:', err);
-        reject(err);
-      });
+  return new Promise(async (resolve, reject) => {
+    try {
+      // ffprobe 사용하여 비디오 정보 추출
+      const metadata = await extractFFProbeData(filePath);
+      return resolve(metadata);
+    } catch (error) {
+      console.error('Error in getVideoResolution:', error);
+      reject(error);
+    }
   });
+}
+
+// ffprobe에서 비디오 데이터 추출하는 함수
+async function extractFFProbeData(filePath) {
+  try {
+    // 파일 확장자 확인
+    const fileExt = path.extname(filePath).toLowerCase();
+    const fileName = path.basename(filePath);
+    
+    // 파일명에서 카메라 모델 추출 시도
+    const isALEXA35 = fileName.includes('ALEXA35') || fileName.includes('ALEXA 35') || /A_\d{4}C\d{3}/.test(fileName);
+    
+    console.log(`Processing video file: ${filePath}, file extension: ${fileExt}`);
+    
+    // ffprobe 추가 옵션
+    const options = { 
+      path: ffprobePath,
+      // 더 자세한 메타데이터를 가져오도록 옵션 추가
+      probeSize: 5000000,  // 5MB 탐색
+      analyzeDuration: 2000000,  // 2초 분석
+      showStreams: true,
+      showFormat: true
+    };
+    
+    // ffprobe 모듈 직접 사용
+    const metadata = await ffprobe(filePath, options);
+    
+    // 전체 메타데이터 로깅 (디버깅용)
+    console.log('Full metadata:', JSON.stringify(metadata, null, 2));
+    
+    // 비디오 스트림 찾기
+    let videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+    
+    if (!videoStream) {
+      console.log('No valid video stream found');
+      throw new Error('No valid video stream found');
+    }
+    
+    console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
+    
+    // 전체 비디오 스트림 정보 로깅 (디버깅용)
+    console.log('Full video stream metadata:', JSON.stringify(videoStream, null, 2));
+    
+    // 프레임 레이트 계산
+    let fps = 0;
+    if (videoStream.r_frame_rate) {
+      const [num, den] = videoStream.r_frame_rate.split('/');
+      fps = parseInt(num) / parseInt(den);
+    } else if (videoStream.avg_frame_rate) {
+      const [num, den] = videoStream.avg_frame_rate.split('/');
+      if (den !== '0') {
+        fps = parseInt(num) / parseInt(den);
+      }
+    }
+    
+    // 총 프레임 수 계산
+    let frames = 0;
+    if (fps > 0 && videoStream.duration) {
+      frames = Math.round(fps * parseFloat(videoStream.duration));
+    } else if (videoStream.nb_frames) {
+      frames = parseInt(videoStream.nb_frames);
+    } else if (metadata.format && metadata.format.duration) {
+      frames = Math.round(fps * parseFloat(metadata.format.duration));
+    }
+    
+    // 재생 시간
+    let duration = videoStream.duration || 0;
+    if (duration === 0 && metadata.format && metadata.format.duration) {
+      duration = parseFloat(metadata.format.duration);
+    }
+    
+    // 컬러스페이스 정보
+    let colorspace = 'unknown';
+    if (videoStream.color_space) {
+      colorspace = videoStream.color_space;
+    } else if (videoStream.colorspace) {
+      colorspace = videoStream.colorspace;
+    } else if (videoStream.color_primaries) {
+      colorspace = videoStream.color_primaries;
+    }
+    
+    // 컬러 트랜스퍼 정보
+    let colorTransfer = 'unknown';
+    if (videoStream.color_transfer) {
+      colorTransfer = videoStream.color_transfer;
+    } else if (videoStream.color_trc) {
+      colorTransfer = videoStream.color_trc;
+    } else if (videoStream.transfer_characteristics) {
+      colorTransfer = videoStream.transfer_characteristics;
+    }
+    
+    // 비디오 코덱 정보
+    let codec = 'unknown';
+    if (videoStream.codec_name) {
+      codec = videoStream.codec_name.toUpperCase();
+    }
+    
+    // 비트 심도 정보
+    let bitDepth = 'unknown';
+    if (videoStream.bits_per_raw_sample) {
+      bitDepth = `${videoStream.bits_per_raw_sample}-bit`;
+    } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p10')) {
+      bitDepth = '10-bit';
+    } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p12')) {
+      bitDepth = '12-bit';
+    } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p8')) {
+      bitDepth = '8-bit';
+    }
+    
+    // 픽셀 포맷 및 크로마 서브샘플링 정보
+    let pixelFormat = 'unknown';
+    let chromaSubsampling = 'unknown';
+    if (videoStream.pix_fmt) {
+      pixelFormat = videoStream.pix_fmt;
+      
+      // 크로마 서브샘플링 추론
+      if (videoStream.pix_fmt.includes('444')) {
+        chromaSubsampling = '4:4:4';
+      } else if (videoStream.pix_fmt.includes('422')) {
+        chromaSubsampling = '4:2:2';
+      } else if (videoStream.pix_fmt.includes('420')) {
+        chromaSubsampling = '4:2:0';
+      }
+    }
+    
+    // 스캔 타입 정보 (인터레이스 또는 프로그레시브)
+    let scanType = 'unknown';
+    if (videoStream.field_order) {
+      if (videoStream.field_order === 'progressive') {
+        scanType = 'Progressive';
+      } else {
+        scanType = 'Interlaced';
+      }
+    }
+    
+    // 비트레이트 정보
+    let bitrate = 'unknown';
+    if (videoStream.bit_rate) {
+      const bitrateMbps = Math.round(parseInt(videoStream.bit_rate) / 1000000);
+      bitrate = `${bitrateMbps} Mbps`;
+    } else if (metadata.format && metadata.format.bit_rate) {
+      const bitrateMbps = Math.round(parseInt(metadata.format.bit_rate) / 1000000);
+      bitrate = `${bitrateMbps} Mbps`;
+    }
+    
+    // 사용자 친화적인 이름으로 변환
+    colorspace = friendlyColorspaceName(colorspace);
+    colorTransfer = friendlyTransferName(colorTransfer);
+    
+    console.log(`Video Codec: ${codec}`);
+    console.log(`Video FPS: ${fps}, Duration: ${duration}s, Total frames: ${frames}`);
+    console.log(`Color Space: ${colorspace}, Color Transfer: ${colorTransfer}`);
+    console.log(`Bit Depth: ${bitDepth}, Chroma Subsampling: ${chromaSubsampling}`);
+    console.log(`Scan Type: ${scanType}, Bitrate: ${bitrate}`);
+    
+    return { 
+      width: videoStream.width, 
+      height: videoStream.height,
+      duration: duration,
+      frames: frames,
+      colorspace: colorspace,
+      color_transfer: colorTransfer,
+      codec: codec,
+      fps: fps,
+      bit_depth: bitDepth,
+      chroma_subsampling: chromaSubsampling,
+      scan_type: scanType,
+      bitrate: bitrate,
+      pixel_format: pixelFormat
+    };
+  } catch (error) {
+    console.error('Error in extractFFProbeData:', error);
+    throw error;
+  }
 }
 
 // 특수 이미지 파일의 크기 검색 함수
@@ -521,16 +878,24 @@ function estimateDimensionsByFileSize(filePath) {
   }
 }
 
-// 비디오 파일 정보 추출 함수 - 외부 호출용 인터페이스
-async function analyzeVideo(filePath) {
+// IPC Handlers
+ipcMain.handle('get-image-size', handleGetImageSize);
+
+// 비디오 메타데이터 핸들러 추가
+ipcMain.handle('get-video-metadata', async (event, filePath) => {
   try {
-    // getVideoResolution을 호출하여 일관된 구현 사용
-    return await getVideoResolution(filePath);
+    // 비디오 파일 확장자 확인
+    const fileExt = path.extname(filePath).toLowerCase();
+    const isVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.wmv', '.flv', '.m4v', '.3gp', '.mxf', '.r3d', '.braw', '.ari', '.raw', '.arw', '.sraw'].includes(fileExt);
+    
+    if (!isVideo) {
+      return null;
+    }
+    
+    const metadata = await extractFFProbeData(filePath);
+    return metadata;
   } catch (error) {
-    console.error('FFprobe 분석 오류:', error);
+    console.error('Error getting video metadata:', error);
     return null;
   }
-}
-
-// IPC Handlers
-ipcMain.handle('get-image-size', handleGetImageSize); 
+}); 

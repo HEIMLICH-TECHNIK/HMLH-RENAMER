@@ -1,6 +1,6 @@
 {
   "name": "hmlh_namer",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Rename files with a simple interface by HEIMLICH®",
   "main": "main.js",
   "scripts": {

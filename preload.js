@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld(
 
 // 이미지 크기를 가져오는 기능 추가
 contextBridge.exposeInMainWorld('electron', {
-  getImageSize: (filePath) => ipcRenderer.invoke('get-image-size', filePath)
+  getImageSize: (filePath) => ipcRenderer.invoke('get-image-size', filePath),
+  getVideoMetadata: (filePath) => ipcRenderer.invoke('get-video-metadata', filePath)
 }); 

@@ -17,6 +17,10 @@ const State = {
   wordRules: [],           // 단어 변경 규칙
   selectedWordTokens: [],  // 선택된 단어 토큰
   wordPatterns: [],        // 일괄 적용용 패턴
+  lastSelectedWord: null,  // 마지막으로 선택한 단어 (연속 선택용)
+  treatSelectionAsOne: false, // 연속 선택을 하나의 단어로 취급
+  applySimilarPattern: false, // 유사한 파일명 패턴에만 적용
+  selectedGroups: [],      // 연속 선택된 단어 그룹
   
   // 히스토리 관련 상태
   fileHistory: [],         // 파일 목록 변경 히스토리
@@ -24,6 +28,12 @@ const State = {
   MAX_HISTORY: 50,         // 최대 히스토리 저장 개수
   isUndoRedoAction: false, // undo/redo 작업 중 여부
   initialState: null,      // 초기 상태 저장
+  
+  // 저장된 규칙
+  savedRules: {},
+  
+  // 정렬 진행 중인지 추적하는 플래그
+  isSorting: false,
   
   // 상태 초기화
   resetState() {
@@ -35,11 +45,26 @@ const State = {
     this.wordRules = [];
     this.selectedWordTokens = [];
     this.wordPatterns = [];
+    this.lastSelectedWord = null;
     this.fileHistory = [];
     this.historyIndex = -1;
     this.isUndoRedoAction = false;
     this.initialState = null;
     this.mediaCache = {};
+    this.isSorting = false;
+    
+    // 저장된 규칙은 초기화하지 않음
+    
+    try {
+      // 로컬 스토리지에서 저장된 규칙 불러오기
+      const savedRulesStr = localStorage.getItem('savedRules');
+      if (savedRulesStr) {
+        this.savedRules = JSON.parse(savedRulesStr);
+      }
+    } catch (error) {
+      console.error('Failed to load saved rules:', error);
+      this.savedRules = {};
+    }
   },
   
   // 앱 상태 내보내기 (디버깅용)

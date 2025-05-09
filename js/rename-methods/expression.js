@@ -80,13 +80,21 @@ async function applyExpression(baseName, fileExt, fileName, filePath, index, exp
     
     // 미디어 파일 타입 확인
     let isImage = metaData ? metaData.isImage : /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(filePath);
-    let isVideo = metaData ? metaData.isVideo : /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp)$/i.test(filePath);
+    let isVideo = metaData ? metaData.isVideo : /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(filePath);
     
     // 미디어 크기 정보 초기화
     let width = metaData ? metaData.width : 0;
     let height = metaData ? metaData.height : 0;
     let duration = metaData ? metaData.duration : 0;
     let frames = metaData ? metaData.frames : 0;
+    let colorspace = metaData ? metaData.colorspace : 'unknown';
+    let colorTransfer = metaData ? metaData.color_transfer : 'unknown';
+    let codec = metaData ? metaData.codec : 'unknown';
+    let bitDepth = metaData ? metaData.bit_depth : 'unknown';
+    let chromaSubsampling = metaData ? metaData.chroma_subsampling : 'unknown';
+    let scanType = metaData ? metaData.scan_type : 'unknown';
+    let bitrate = metaData ? metaData.bitrate : 'unknown';
+    let pixelFormat = metaData ? metaData.pixel_format : 'unknown';
     let date = metaData && metaData.date ? metaData.date : new Date().toISOString().split('T')[0];
     
     // 표현식 평가를 위한 컨텍스트 생성
@@ -104,6 +112,14 @@ async function applyExpression(baseName, fileExt, fileName, filePath, index, exp
       isImage: isImage,
       isVideo: isVideo,
       frames: frames,
+      colorspace: colorspace,
+      log: colorTransfer,
+      codec: codec,
+      bitDepth: bitDepth,
+      chromaSubsampling: chromaSubsampling,
+      scanType: scanType,
+      bitrate: bitrate,
+      pixelFormat: pixelFormat,
       // 헬퍼 함수들
       padnum: (num, length) => num.toString().padStart(length, '0'),
       upper: (str) => str.toUpperCase(),

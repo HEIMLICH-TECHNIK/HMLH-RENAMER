@@ -29,13 +29,21 @@ async function applyPattern(baseName, fileExt, index, pattern, filePath, metaDat
   
   // 미디어 파일 타입 확인
   const isImage = metaData.isImage || /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(filePath || '');
-  const isVideo = metaData.isVideo || /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp)$/i.test(filePath || '');
+  const isVideo = metaData.isVideo || /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(filePath || '');
   
   // 메타데이터 값 추출 또는 기본값 설정
   const width = metaData.width || 0;
   const height = metaData.height || 0;
   const duration = metaData.duration || 0;
   const frames = metaData.frames || 0;
+  const colorspace = metaData.colorspace || 'unknown';
+  const colorTransfer = metaData.color_transfer || 'unknown';
+  const codec = metaData.codec || 'unknown';
+  const bitDepth = metaData.bit_depth || 'unknown';
+  const chromaSubsampling = metaData.chroma_subsampling || 'unknown';
+  const scanType = metaData.scan_type || 'unknown';
+  const bitrate = metaData.bitrate || 'unknown';
+  const pixelFormat = metaData.pixel_format || 'unknown';
   
   // 비디오 시간 포맷팅
   let durationFormatted = '00:00:00';
@@ -63,6 +71,14 @@ async function applyPattern(baseName, fileExt, index, pattern, filePath, metaDat
     .replace(/{duration}/g, duration.toString())
     .replace(/{duration_fmt}/g, durationFormatted)
     .replace(/{frames}/g, frames.toString())
+    .replace(/{colorspace}/g, colorspace)
+    .replace(/{log}/g, colorTransfer)
+    .replace(/{codec}/g, codec)
+    .replace(/{bit_depth}/g, bitDepth)
+    .replace(/{chroma_subsampling}/g, chromaSubsampling)
+    .replace(/{scan_type}/g, scanType)
+    .replace(/{bitrate}/g, bitrate)
+    .replace(/{pixel_format}/g, pixelFormat)
     .replace(/{is_image}/g, isImage ? 'image' : '')
     .replace(/{is_video}/g, isVideo ? 'video' : '')
     .replace(/{upper_name}/g, baseName.toUpperCase())

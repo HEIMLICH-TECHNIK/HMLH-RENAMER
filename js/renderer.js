@@ -20,11 +20,14 @@ import {
 } from './utils/file-utils.js';
 import { getCurrentDateFormat, formatDate } from './utils/date-formatter.js';
 
+// 정렬 유틸리티 모듈 임포트
+import { sortFiles as sortFilesUtil } from './utils/sorting.js';
+
 // 이름 변경 방식 모듈 임포트
 import { applyPattern, checkDateVariableInPattern } from './rename-methods/pattern.js';
 import { applyFindReplace, escapeRegExp } from './rename-methods/replace.js';
 import { applyRegex } from './rename-methods/regex.js';
-import { addWordRule, applyWordRules, createWordPattern } from './rename-methods/word.js';
+import { addWordRule, applyWordRules, createWordPattern, splitWordsInFileName, selectSimilarPatternWords } from './rename-methods/word.js';
 import { applyNumbering, createSortedIndexMap } from './rename-methods/numbering.js';
 import { applyExpression, formatTime } from './rename-methods/expression.js';
 
@@ -77,7 +80,7 @@ async function loadMediaMetadata(files) {
   // 미디어 파일 필터링
   const mediaFiles = files.filter(file => {
     const isImage = /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(file);
-    const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp)$/i.test(file);
+    const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(file);
     return isImage || isVideo;
   });
   
@@ -111,7 +114,7 @@ async function loadMediaMetadata(files) {
         }
         
         const isImage = /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(file);
-        const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp)$/i.test(file);
+        const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(file);
         
         // 기본 메타데이터 정보
         const metadata = {
@@ -119,6 +122,14 @@ async function loadMediaMetadata(files) {
           height: 0,
           duration: 0,
           frames: 0,
+          colorspace: 'unknown',
+          color_transfer: 'unknown',
+          codec: 'unknown',
+          bit_depth: 'unknown',
+          chroma_subsampling: 'unknown',
+          scan_type: 'unknown',
+          bitrate: 'unknown',
+          pixel_format: 'unknown',
           isImage,
           isVideo,
           loaded: false
@@ -132,7 +143,7 @@ async function loadMediaMetadata(files) {
               metadata.width = dimensions.width || 0;
               metadata.height = dimensions.height || 0;
               
-              // 비디오 파일인 경우 duration 정보와 frames 정보
+              // 비디오 파일인 경우 추가 정보
               if (isVideo) {
                 if (dimensions.duration) {
                   metadata.duration = parseFloat(dimensions.duration) || 0;
@@ -140,13 +151,52 @@ async function loadMediaMetadata(files) {
                 if (dimensions.frames) {
                   metadata.frames = parseInt(dimensions.frames) || 0;
                 }
+                if (dimensions.colorspace) {
+                  metadata.colorspace = dimensions.colorspace;
+                }
+                if (dimensions.color_transfer) {
+                  metadata.color_transfer = dimensions.color_transfer;
+                }
+                if (dimensions.codec) {
+                  metadata.codec = dimensions.codec;
+                }
+                if (dimensions.bit_depth) {
+                  metadata.bit_depth = dimensions.bit_depth;
+                }
+                if (dimensions.chroma_subsampling) {
+                  metadata.chroma_subsampling = dimensions.chroma_subsampling;
+                }
+                if (dimensions.scan_type) {
+                  metadata.scan_type = dimensions.scan_type;
+                }
+                if (dimensions.bitrate) {
+                  metadata.bitrate = dimensions.bitrate;
+                }
+                if (dimensions.pixel_format) {
+                  metadata.pixel_format = dimensions.pixel_format;
+                }
               }
               
               metadata.loaded = true;
-              console.log(`Loaded media info for ${file}: ${metadata.width}x${metadata.height}, duration: ${metadata.duration}s, frames: ${metadata.frames}`);
+              console.log(`Loaded media info for ${file}: ${metadata.width}x${metadata.height}, duration: ${metadata.duration}s, frames: ${metadata.frames}, colorspace: ${metadata.colorspace}, log: ${metadata.color_transfer}, codec: ${metadata.codec}, bit_depth: ${metadata.bit_depth}, chroma: ${metadata.chroma_subsampling}, scan: ${metadata.scan_type}, bitrate: ${metadata.bitrate}`);
             }
           } catch (error) {
             console.error(`Error loading media info for ${file}:`, error);
+          }
+        }
+        
+        // 비디오 파일에 대해 추가 정보 가져오기 시도
+        if (isVideo && window.electron && window.electron.getVideoMetadata) {
+          try {
+            const videoInfo = await window.electron.getVideoMetadata(file);
+            if (videoInfo) {
+              // 비디오 메타데이터 병합
+              Object.assign(metadata, videoInfo);
+              metadata.loaded = true;
+              console.log(`Loaded extended video info for ${file}:`, videoInfo);
+            }
+          } catch (error) {
+            console.error(`Error loading video metadata for ${file}:`, error);
           }
         }
         
@@ -281,13 +331,25 @@ async function updatePreview() {
     
     const previewItem = document.createElement('div');
     previewItem.className = 'preview-item';
+    previewItem.dataset.index = index;
+    previewItem.draggable = true;
+    
+    // 드래그 핸들 추가
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'drag-handle';
+    dragHandle.innerHTML = '⋮⋮';
     
     const oldNameEl = document.createElement('div');
     oldNameEl.className = 'old-name';
     
     // 단어 선택 방식일 때 단어를 선택 가능하게 처리
     if (State.currentMethod === 'word') {
-      const words = oldName.split(/(\W+)/); // 단어와 비단어로 분리
+      // 개선된 단어 분리 함수 사용
+      const words = splitWordsInFileName(oldName);
+      
+      // 단어 토큰 요소들을 저장할 배열
+      const wordElements = [];
+      
       words.forEach((word, wordIndex) => {
         if (word.trim() === '') return; // 빈 문자열 건너뛰기
         
@@ -297,45 +359,176 @@ async function updatePreview() {
         wordSpan.dataset.fileIndex = index;
         wordSpan.dataset.wordIndex = wordIndex;
         wordSpan.dataset.word = word;
+        // 툴큰 추가
+        wordSpan.dataset.tooltip = 'Select multiple words: Shift + click';
         
-        // 이 단어가 선택됐는지 확인
-        const isSelected = State.selectedWordTokens.some(token => 
+        // 이 단어가 선택됐는지 확인 - 직접 선택 또는 패턴 매칭으로 선택
+        let isSelected = State.selectedWordTokens.some(token => 
           token.fileIndex == index && token.wordIndex == wordIndex
         );
+        
+        // 일괄 적용 활성화된 경우 패턴으로도 확인
+        if (!isSelected && DOM.applyToAllFiles && DOM.applyToAllFiles.checked && State.wordPatterns.length > 0) {
+          isSelected = State.wordPatterns.some(pattern => {
+            pattern.pattern.lastIndex = 0; // 정규식 상태 초기화
+            const matched = pattern.pattern.test(word);
+            pattern.pattern.lastIndex = 0; // 다시 초기화
+            return matched;
+          });
+        }
         
         if (isSelected) {
           wordSpan.classList.add('selected');
         }
         
-        wordSpan.addEventListener('click', () => {
-          // 선택 토글
-          if (wordSpan.classList.contains('selected')) {
-            wordSpan.classList.remove('selected');
-            // 선택된 토큰에서 제거
-            const tokenIndex = State.selectedWordTokens.findIndex(token => 
-              token.fileIndex == index && token.wordIndex == wordIndex
-            );
-            if (tokenIndex !== -1) {
-              State.selectedWordTokens.splice(tokenIndex, 1);
+        // 단어 요소를 배열에 저장
+        wordElements.push(wordSpan);
+        
+        // 단어 클릭 이벤트
+        wordSpan.addEventListener('click', (e) => {
+          const isShiftKey = e.shiftKey;
+          const wordIndex = parseInt(e.target.dataset.wordIndex);
+          
+          // 히스토리 저장
+          saveToHistory('word-selection');
+          
+          if (isShiftKey && State.lastSelectedWord) {
+            // Shift 키를 누른 경우 연속 선택
+            const lastFileIndex = State.lastSelectedWord.fileIndex;
+            const lastWordIndex = parseInt(State.lastSelectedWord.wordIndex);
+            
+            // 같은 파일인 경우만 연속 선택 허용
+            if (lastFileIndex === index) {
+              // 연속 단어 선택 - 시작과 끝 사이의 모든 단어 선택
+              const startIdx = Math.min(lastWordIndex, wordIndex);
+              const endIdx = Math.max(lastWordIndex, wordIndex);
+              
+              // 선택된 단어 그룹 생성
+              const selectedGroup = {
+                fileIndex: index,
+                startIndex: startIdx,
+                endIndex: endIdx
+              };
+              
+              // 기존 그룹과 중복되지 않는지 확인
+              const isDuplicate = State.selectedGroups.some(group => 
+                group.fileIndex === index && 
+                group.startIndex === startIdx && 
+                group.endIndex === endIdx
+              );
+              
+              if (!isDuplicate) {
+                State.selectedGroups.push(selectedGroup);
+              }
+              
+              // 연속 선택된 단어들 모두 선택 상태로 변경
+              for (let idx = startIdx; idx <= endIdx; idx++) {
+                // 구분자가 아닌 단어만 선택
+                const wordSpan = document.querySelector(`.word-token[data-word-index="${idx}"][data-file-index="${index}"]`);
+                if (wordSpan && !/^[_\-\s]$/.test(wordSpan.textContent)) {
+                  wordSpan.classList.add('selected');
+                  
+                  // 선택된 단어 토큰 목록에 추가 (중복 제거)
+                  const tokenExists = State.selectedWordTokens.some(token => 
+                    token.fileIndex == index && parseInt(token.wordIndex) === idx
+                  );
+                  
+                  if (!tokenExists) {
+                    State.selectedWordTokens.push({
+                      fileIndex: index,
+                      wordIndex: idx,
+                      word: wordSpan.textContent
+                    });
+                  }
+                }
+              }
+              
+              // 토스트 메시지 표시
+              showToast(`Selected multiple words (${endIdx - startIdx + 1}). Use "Treat consecutive selections as one word" option.`, 'info');
             }
           } else {
-            wordSpan.classList.add('selected');
-            // 선택된 토큰에 추가
-            State.selectedWordTokens.push({
-              fileIndex: index,
-              wordIndex: wordIndex,
-              word: word
-            });
+            // 일반 클릭 - 토글 선택
+            const wordSpan = e.target;
+            const isSelected = wordSpan.classList.contains('selected');
             
-            // 일괄 적용 위한 패턴 저장
-            if (DOM.applyToAllFiles && DOM.applyToAllFiles.checked) {
-              // 이 단어 패턴이 이미 저장됐는지 확인
-              if (!State.wordPatterns.some(pattern => pattern.word === word)) {
-                State.wordPatterns.push(createWordPattern(word));
+            if (isSelected) {
+              // 선택 해제
+              wordSpan.classList.remove('selected');
+              
+              // 선택된 단어 토큰 목록에서 제거
+              State.selectedWordTokens = State.selectedWordTokens.filter(token => 
+                !(token.fileIndex == index && parseInt(token.wordIndex) === wordIndex)
+              );
+              
+              // 관련 그룹 제거
+              State.selectedGroups = State.selectedGroups.filter(group => 
+                !(group.fileIndex === index && 
+                  group.startIndex <= wordIndex && 
+                  group.endIndex >= wordIndex)
+              );
+            } else {
+              // 선택 추가
+              wordSpan.classList.add('selected');
+              
+              // 선택된 단어 토큰 목록에 추가
+              const newToken = {
+                fileIndex: index,
+                wordIndex: wordIndex,
+                word: wordSpan.textContent
+              };
+              State.selectedWordTokens.push(newToken);
+              
+              // 유사 패턴 선택 옵션이 켜져 있는 경우
+              if (State.applySimilarPattern && DOM.applySimilarPattern && DOM.applySimilarPattern.checked) {
+                // 선택한 단어와 유사한 패턴의 다른 단어들도 자동 선택
+                // 다른 파일에서만 유사 패턴 검색
+                const similarPatternTokens = selectSimilarPatternWords(
+                  State.selectedFiles, 
+                  index, 
+                  [newToken], 
+                  true
+                );
+                
+                // 유사 패턴 단어가 있으면 추가
+                if (similarPatternTokens.length > 0) {
+                  // 토큰 추가
+                  State.selectedWordTokens = [...State.selectedWordTokens, ...similarPatternTokens];
+                  
+                  // 화면에 선택 상태 표시
+                  similarPatternTokens.forEach(token => {
+                    const similarWordSpan = document.querySelector(
+                      `.word-token[data-file-index="${token.fileIndex}"][data-word-index="${token.wordIndex}"]`
+                    );
+                    
+                    if (similarWordSpan) {
+                      similarWordSpan.classList.add('selected');
+                    }
+                  });
+                  
+                  // 확인 메시지 표시
+                  if (similarPatternTokens.length > 0) {
+                    showToast(`${similarPatternTokens.length} similar pattern word(s) automatically selected in other files`, 'info');
+                  }
+                }
               }
+              
+              // 마지막 선택 단어 저장
+              State.lastSelectedWord = {
+                fileIndex: index,
+                wordIndex: wordIndex
+              };
             }
           }
-          updatePreview();
+          
+          // 단어 규칙 UI 활성화
+          if (State.selectedWordTokens.length > 0 && DOM.wordRulesContainer) {
+            DOM.wordRulesContainer.classList.add('active');
+          } else if (DOM.wordRulesContainer) {
+            DOM.wordRulesContainer.classList.remove('active');
+          }
+          
+          // 미리보기 업데이트
+          updateAfterWordSelection();
         });
         
         oldNameEl.appendChild(wordSpan);
@@ -371,14 +564,80 @@ async function updatePreview() {
       console.log(`Removed file at index ${index}, remaining: ${State.selectedFiles.length}`);
     });
     
+    previewItem.appendChild(dragHandle);
     previewItem.appendChild(oldNameEl);
     previewItem.appendChild(arrow);
     previewItem.appendChild(newNameEl);
     previewItem.appendChild(removeBtn);
     previewList.appendChild(previewItem);
+    
+    // 드래그 앤 드롭 이벤트 리스너 추가
+    previewItem.addEventListener('dragstart', (e) => {
+      previewItem.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', index);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    previewItem.addEventListener('dragend', () => {
+      previewItem.classList.remove('dragging');
+    });
   }
   
+  // 드롭 영역 이벤트 리스너
+  previewList.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const draggingItem = document.querySelector('.dragging');
+    if (!draggingItem) return;
+    
+    const targetItem = getDragAfterElement(previewList, e.clientY);
+    if (targetItem) {
+      previewList.insertBefore(draggingItem, targetItem);
+    } else {
+      previewList.appendChild(draggingItem);
+    }
+  });
+  
+  previewList.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    
+    // 새 순서로 파일 목록 재정렬
+    const items = [...previewList.querySelectorAll('.preview-item')];
+    const newFiles = [];
+    
+    items.forEach(item => {
+      const oldIndex = parseInt(item.dataset.index);
+      newFiles.push(State.selectedFiles[oldIndex]);
+    });
+    
+    // 히스토리 저장
+    saveToHistory();
+    
+    // 새 순서로 파일 목록 업데이트
+    State.selectedFiles = newFiles;
+    
+    updateUI();
+  });
+  
   DOM.previewArea.appendChild(previewList);
+}
+
+/**
+ * 드래그 앤 드롭 위치 계산 도우미 함수
+ */
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.preview-item:not(.dragging)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - (box.top + box.height / 2);
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 /**
@@ -397,6 +656,9 @@ async function generateNewName(filePath, index) {
     height: 0,
     duration: 0,
     frames: 0,
+    colorspace: 'unknown',
+    color_transfer: 'unknown',
+    codec: 'unknown',
     isImage: false,
     isVideo: false
   };
@@ -407,7 +669,7 @@ async function generateNewName(filePath, index) {
   } else {
     // 기본적인 파일 타입 정보는 설정
     metaData.isImage = /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(filePath);
-    metaData.isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp)$/i.test(filePath);
+    metaData.isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(filePath);
   }
   
   switch (State.currentMethod) {
@@ -439,14 +701,17 @@ async function generateNewName(filePath, index) {
       );
       break;
     case 'word':
-      newName = applyWordRules(
+      newName = await applyWordRules(
         fileName, 
         fileExt, 
         index, 
         State.wordRules, 
         State.selectedWordTokens, 
         State.wordPatterns, 
-        DOM.applyToAllFiles && DOM.applyToAllFiles.checked
+        DOM.applyToAllFiles && DOM.applyToAllFiles.checked,
+        State.applySimilarPattern,
+        State.treatSelectionAsOne,
+        State.selectedGroups
       );
       break;
     case 'numbering':
@@ -536,14 +801,17 @@ async function renameFiles() {
         for (let i = 0; i < State.selectedFiles.length; i++) {
           const file = State.selectedFiles[i];
           const fileName = getFileName(file);
-          const newName = applyWordRules(
+          const newName = await applyWordRules(
             fileName, 
             '', 
             i, 
             State.wordRules, 
             State.selectedWordTokens, 
             State.wordPatterns, 
-            DOM.applyToAllFiles && DOM.applyToAllFiles.checked
+            DOM.applyToAllFiles && DOM.applyToAllFiles.checked,
+            State.applySimilarPattern,
+            State.treatSelectionAsOne,
+            State.selectedGroups
           );
           
           // 개별 파일 이름 변경
@@ -711,11 +979,69 @@ function showResults(results) {
 }
 
 /**
+ * 단어 미리보기 업데이트 함수
+ * 단어 선택 후 미리보기만 업데이트하는 경량화된 함수
+ */
+function updateWordMethodPreview() {
+  // 현재 메소드가 word가 아니면 전체 미리보기 업데이트
+  if (State.currentMethod !== 'word') {
+    updatePreview();
+    return;
+  }
+  
+  // 모든 파일의 새 이름 생성 및 미리보기 업데이트
+  for (let index = 0; index < State.selectedFiles.length; index++) {
+    const file = State.selectedFiles[index];
+    const fileName = getFileName(file);
+    
+    // 이 파일에 대한 새 이름 생성
+    applyWordRules(
+      fileName, 
+      '', 
+      index, 
+      State.wordRules, 
+      State.selectedWordTokens, 
+      State.wordPatterns, 
+      DOM.applyToAllFiles && DOM.applyToAllFiles.checked,
+      State.applySimilarPattern,
+      State.treatSelectionAsOne,
+      State.selectedGroups
+    ).then(newName => {
+      // 미리보기 요소 찾기
+      const previewItem = document.querySelector(`.preview-item[data-index="${index}"]`);
+      if (previewItem) {
+        const newNameEl = previewItem.querySelector('.new-name');
+        if (newNameEl) {
+          // 새 이름 업데이트
+          newNameEl.textContent = newName;
+        }
+      }
+    });
+  }
+}
+
+/**
+ * 단어 선택 후 UI 업데이트
+ */
+function updateAfterWordSelection() {
+  // 미리보기 업데이트
+  if (State.currentMethod === 'word') {
+    updateWordMethodPreview();
+  } else {
+    updatePreview();
+  }
+}
+
+/**
  * 앱 초기화
  */
 function initializeApp() {
   // 상태 초기화
   State.resetState();
+  
+  // DOM 요소 참조 가져오기
+  DOM.applySimilarPattern = document.getElementById('applySimilarPattern');
+  DOM.wordRulesContainer = document.getElementById('wordRulesContainer');
   
   // 탭 이벤트 리스너
   DOM.tabs.forEach(tab => {
@@ -886,11 +1212,53 @@ function initializeApp() {
   
   if (DOM.applyToAllFiles) {
     DOM.applyToAllFiles.addEventListener('change', () => {
+      // 히스토리 저장
+      saveToHistory('apply-to-all-toggle');
+      
       // 체크 해제 시 패턴 초기화
       if (!DOM.applyToAllFiles.checked) {
         State.wordPatterns = [];
+        console.log('전체 적용 패턴 초기화');
+      } else {
+        // 체크 활성화 시 현재 선택된 단어들을 패턴으로 자동 추가
+        State.selectedWordTokens.forEach(token => {
+          const word = token.word;
+          // 이미 패턴에 추가되지 않은 경우에만 추가
+          if (word && !State.wordPatterns.some(pattern => pattern.word === word)) {
+            State.wordPatterns.push(createWordPattern(word));
+            console.log(`패턴 추가: "${word}"`);
+          }
+        });
       }
-      updatePreview();
+      
+      // 전체 UI 업데이트 - 단순 미리보기 대신 더 포괄적인 UI 업데이트 실행
+      updateUI();
+    });
+  }
+  
+  // 새로 추가된 "유사 패턴에만 적용" 체크박스 처리
+  const applySimilarPattern = document.getElementById('applySimilarPattern');
+  if (applySimilarPattern) {
+    applySimilarPattern.addEventListener('change', () => {
+      // 상태 저장
+      State.applySimilarPattern = applySimilarPattern.checked;
+      console.log(`유사 패턴 적용: ${State.applySimilarPattern}`);
+      
+      // UI 업데이트
+      updateUI();
+    });
+  }
+  
+  // 새로 추가된 "연속 선택을 하나의 단어로 취급" 체크박스 처리
+  const treatSelectionAsOne = document.getElementById('treatSelectionAsOne');
+  if (treatSelectionAsOne) {
+    treatSelectionAsOne.addEventListener('change', () => {
+      // 상태 저장
+      State.treatSelectionAsOne = treatSelectionAsOne.checked;
+      console.log(`연속 선택을 하나로 취급: ${State.treatSelectionAsOne}`);
+      
+      // UI 업데이트
+      updateUI();
     });
   }
   
@@ -1055,8 +1423,239 @@ function initializeApp() {
   // 모달 핸들러 설정
   setupModalHandlers();
   
+  // 정렬 드롭다운 이벤트 리스너 추가
+  const previewSortSelect = document.getElementById('previewSortSelect');
+  if (previewSortSelect) {
+    previewSortSelect.addEventListener('change', () => {
+      const sortBy = previewSortSelect.value;
+      if (sortBy === 'none') {
+        // 커스텀 정렬 - 아무것도 하지 않음
+        return;
+      }
+      
+      // 히스토리 저장
+      saveToHistory();
+      
+      // 정렬 기준에 따라 파일 정렬
+      sortFiles(sortBy);
+      
+      // UI 업데이트
+      updateUI();
+    });
+  }
+  
+  // 설정 버튼과 모달 초기화
+  const profileBtn = document.getElementById('profileBtn');
+  const settingsModal = document.getElementById('settingsModal');
+  const closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
+  
+  // 설정 탭 관련 요소들
+  const settingsTabs = document.querySelectorAll('.settings-tab');
+  const settingsContents = document.querySelectorAll('.settings-content');
+  
+  // 시스템 정보 표시
+  const systemOSElement = document.getElementById('systemOS');
+  const electronVersionElement = document.getElementById('electronVersion');
+  
+  // 설정 버튼 클릭 이벤트
+  if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+      if (settingsModal) {
+        settingsModal.classList.remove('hidden');
+        
+        // 시스템 정보 업데이트
+        if (window.electron && window.electron.getSystemInfo && systemOSElement) {
+          window.electron.getSystemInfo().then(info => {
+            if (systemOSElement) systemOSElement.textContent = info.os || 'Unknown';
+            if (electronVersionElement) electronVersionElement.textContent = info.electronVersion || 'Unknown';
+          }).catch(err => {
+            console.error('Failed to get system info:', err);
+          });
+        }
+      }
+    });
+  }
+  
+  // 설정 탭 클릭 이벤트
+  if (settingsTabs.length > 0) {
+    settingsTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.dataset.tab;
+        
+        // 모든 탭 비활성화
+        settingsTabs.forEach(t => t.classList.remove('active'));
+        
+        // 현재 탭 활성화
+        tab.classList.add('active');
+        
+        // 모든 콘텐츠 숨기기
+        settingsContents.forEach(content => content.classList.remove('active'));
+        
+        // 선택한 탭의 콘텐츠 표시
+        const activeContent = document.getElementById(`${tabId}-settings`);
+        if (activeContent) {
+          activeContent.classList.add('active');
+        }
+      });
+    });
+  }
+  
+  // 계정 설정 관련 이벤트
+  const saveAccountBtn = document.getElementById('saveAccountBtn');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+  
+  if (saveAccountBtn) {
+    saveAccountBtn.addEventListener('click', () => {
+      const displayName = document.getElementById('userDisplayName').value;
+      const email = document.getElementById('userEmail').value;
+      
+      // 계정 정보 저장 처리 (향후 구현)
+      console.log('Saving account info:', { displayName, email });
+      showToast('Account information saved successfully', 'success');
+    });
+  }
+  
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', () => {
+      // 로그아웃 처리 (향후 구현)
+      console.log('User signed out');
+      showToast('You have been signed out', 'info');
+    });
+  }
+  
+  if (changeAvatarBtn) {
+    changeAvatarBtn.addEventListener('click', async () => {
+      // 이미지 선택 다이얼로그 표시 (향후 구현)
+      console.log('Change avatar clicked');
+      
+      if (window.api && window.api.selectImage) {
+        try {
+          const imagePath = await window.api.selectImage();
+          if (imagePath) {
+            const profilePicture = document.getElementById('profilePicture');
+            if (profilePicture) {
+              profilePicture.src = imagePath;
+              console.log('Profile picture updated:', imagePath);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to select image:', error);
+        }
+      }
+    });
+  }
+  
+  // 파일 설정 관련 이벤트
+  const browseFolderBtn = document.getElementById('browseFolderBtn');
+  if (browseFolderBtn) {
+    browseFolderBtn.addEventListener('click', async () => {
+      if (window.api && window.api.selectFolder) {
+        try {
+          const folderPath = await window.api.selectFolder();
+          if (folderPath) {
+            const defaultFolderPath = document.getElementById('defaultFolderPath');
+            if (defaultFolderPath) {
+              defaultFolderPath.value = folderPath;
+              console.log('Default folder updated:', folderPath);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to select folder:', error);
+        }
+      }
+    });
+  }
+  
+  // 업데이트 확인 이벤트
+  const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
+  if (checkUpdatesBtn) {
+    checkUpdatesBtn.addEventListener('click', () => {
+      // 업데이트 확인 기능 (향후 구현)
+      console.log('Checking for updates...');
+      
+      // 임시 토스트 메시지
+      setTimeout(() => {
+        showToast('You are using the latest version', 'success');
+      }, 1000);
+    });
+  }
+  
+  // 설정 모달 닫기 버튼 이벤트
+  if (closeSettingsModalBtn) {
+    closeSettingsModalBtn.addEventListener('click', () => {
+      if (settingsModal) {
+        settingsModal.classList.add('hidden');
+      }
+    });
+  }
+  
+  // 설정 모달 외부 클릭 시 닫기
+  if (settingsModal) {
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) {
+        settingsModal.classList.add('hidden');
+      }
+    });
+  }
+  
   // UI 초기화
   updateUI();
+}
+
+/**
+ * 파일 정렬 함수 - 별도 모듈 사용
+ */
+function sortFiles(sortBy) {
+  // 이미 정렬 중이면 중단
+  if (State.isSorting) return;
+  
+  console.log(`정렬 시작(${sortBy}) - 파일 수: ${State.selectedFiles.length}`);
+  
+  // 정렬 상태 설정
+  State.isSorting = true;
+  
+  // 정렬 로딩 표시
+  DOM.previewArea.innerHTML = '<div class="sorting-indicator">정렬 중...</div>';
+  
+  // 로딩 인디케이터 표시
+  const loadingIndicator = document.createElement('div');
+  loadingIndicator.className = 'media-loading-indicator';
+  loadingIndicator.innerHTML = `
+    <div class="loading-icon"></div>
+    <div class="loading-text">정렬 중: ${sortBy === 'date' ? '날짜' : sortBy === 'size' ? '크기' : sortBy}</div>
+  `;
+  document.body.appendChild(loadingIndicator);
+  
+  // 인디케이터 제거 함수
+  const removeLoader = () => {
+    loadingIndicator.classList.add('fade-out');
+    setTimeout(() => {
+      if (document.body.contains(loadingIndicator)) {
+        document.body.removeChild(loadingIndicator);
+      }
+    }, 500);
+  };
+  
+  // 정렬 모듈의 sortFiles 함수 사용
+  sortFilesUtil(State.selectedFiles, sortBy, window.api)
+    .then(sortedFiles => {
+      // 정렬된 파일 목록 적용
+      State.selectedFiles = sortedFiles;
+      
+      // UI 업데이트
+      removeLoader();
+      State.isSorting = false;
+      setTimeout(() => updatePreview(), 0);
+      
+      console.log(`정렬 완료: ${State.selectedFiles.length}개 파일`);
+    })
+    .catch(error => {
+      console.error('정렬 실패:', error);
+      removeLoader();
+      State.isSorting = false;
+      setTimeout(() => updatePreview(), 0);
+    });
 }
 
 // 앱 초기화

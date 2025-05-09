@@ -12,8 +12,16 @@
     <div class="sidebar">
       <!-- 고정 상단 영역 -->
       <div class="sidebar-fixed-header">
-        <div class="logo">
-          <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="FILE RENAMER by HEIMLICH" class="logo-image">
+        <div class="logo-header">
+          <div class="logo">
+            <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="FILE RENAMER by HEIMLICH" class="logo-image">
+          </div>
+          <button id="profileBtn" class="profile-btn" title="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </button>
         </div>
         
         <div class="method-tabs">
@@ -21,8 +29,8 @@
           <div class="tab" data-method="replace">Replace</div>
           <div class="tab" data-method="regex">Regex</div>
           <div class="tab" data-method="word">Word</div>
-          <div class="tab" data-method="numbering">Numbering</div>
-          <div class="tab" data-method="expression">Expression</div>
+          <div class="tab" data-method="numbering">Number</div>
+          <div class="tab" data-method="expression">Exp</div>
         </div>
       </div>
       
@@ -44,6 +52,14 @@
               <div class="var-item"><span class="var">{width}, {height}</span> - Image/video dimensions</div>
               <div class="var-item"><span class="var">{duration}, {duration_fmt}</span> - Video length in seconds, formatted time (HH:MM:SS)</div>
               <div class="var-item"><span class="var">{frames}</span> - Total number of frames in video</div>
+              <div class="var-item"><span class="var">{colorspace}</span> - Color space of the video</div>
+              <div class="var-item"><span class="var">{log}</span> - Color transfer characteristic (log, linear, etc.)</div>
+              <div class="var-item"><span class="var">{codec}</span> - Video codec (H264, HEVC, ProRes, etc.)</div>
+              <div class="var-item"><span class="var">{bit_depth}</span> - Video bit depth (8-bit, 10-bit, etc.)</div>
+              <div class="var-item"><span class="var">{chroma_subsampling}</span> - Chroma subsampling (4:4:4, 4:2:2, 4:2:0)</div>
+              <div class="var-item"><span class="var">{scan_type}</span> - Progressive or Interlaced</div>
+              <div class="var-item"><span class="var">{bitrate}</span> - Video bitrate in Mbps</div>
+              <div class="var-item"><span class="var">{pixel_format}</span> - Raw pixel format</div>
               <div class="var-item"><span class="var">{is_image}, {is_video}</span> - Outputs "image" or "video" text</div>
             </div>
             
@@ -150,6 +166,18 @@
               <span>Apply to all files with same patterns</span>
             </label>
           </div>
+          <div class="checkbox-group">
+            <label class="checkbox">
+              <input type="checkbox" id="applySimilarPattern">
+              <span>Apply to similar pattern files only</span>
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox">
+              <input type="checkbox" id="treatSelectionAsOne">
+              <span>Treat consecutive selections as one word</span>
+            </label>
+          </div>
           <div class="input-group" id="wordRulesContainer">
             <!-- Word rules will be dynamically added here -->
           </div>
@@ -221,10 +249,19 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
               <div class="var-item"><span class="var">width, height</span> - Image width/height in pixels</div>
               <div class="var-item"><span class="var">duration</span> - Video duration in seconds</div>
               <div class="var-item"><span class="var">frames</span> - Total number of frames in video</div>
+              <div class="var-item"><span class="var">colorspace</span> - Color space of the video</div>
+              <div class="var-item"><span class="var">log</span> - Color transfer characteristic (log, linear, etc.)</div>
               <div class="var-item"><span class="var">isImage</span> - True if file is image</div>
               <div class="var-item"><span class="var">isVideo</span> - True if file is video</div>
               <div class="var-item"><span class="var">date</span> - File creation date</div>
+              <div class="var-item"><span class="var">codec</span> - Video codec (H264, HEVC, ProRes, etc.)</div>
+              <div class="var-item"><span class="var">bitDepth</span> - Video bit depth (8-bit, 10-bit, etc.)</div>
+              <div class="var-item"><span class="var">chromaSubsampling</span> - Chroma subsampling (4:4:4, 4:2:2, 4:2:0)</div>
+              <div class="var-item"><span class="var">scanType</span> - Progressive or Interlaced</div>
+              <div class="var-item"><span class="var">bitrate</span> - Video bitrate in Mbps</div>
+              <div class="var-item"><span class="var">pixelFormat</span> - Raw pixel format</div>
               <div class="var-item"><span class="note">Note: Special formats (EXR, DPX, TIF) and videos are supported</span></div>
+              <div class="var-item"><span class="note">Supported video formats: MP4, MOV, AVI, MKV, WEBM, WMV, FLV, M4V, 3GP, MXF, R3D (RED), BRAW (Blackmagic), ARI (ARRI), ARW/SRAW/RAW (Camera raw)</span></div>
             </div>
             
             <h4>Functions:</h4>
@@ -253,10 +290,10 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
         <!-- Rules Management Section -->
         <div class="rules-management">
           <div class="rules-header">
-            <h3>Rule Management</h3>
+            <h3>Rules</h3>
             <div class="rule-buttons">
-              <button id="saveRuleBtn" class="btn-outline btn-small">Save Rule</button>
-              <button id="viewRulesBtn" class="btn-outline btn-small">View Rules</button>
+              <button id="saveRuleBtn" class="btn-outline btn-small">Save</button>
+              <button id="viewRulesBtn" class="btn-outline btn-small">View</button>
             </div>
           </div>
         </div>
@@ -264,11 +301,11 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
         <button id="applyBtn" class="btn-primary" disabled>Rename Files</button>
         
         <div class="sidebar-footer">
-          <button id="clearBtn" class="btn-text">Clear All</button>
+          <button id="clearBtn" class="btn-text">Clear</button>
         </div>
         
         <div class="sidebar-footer-version">
-          <span>© 2025 <a href="https://heimlich.studio" class="footer-link"> HEIMLICH®</a> <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER/releases" class="footer-link">Version 0.0.3</a></span>
+          <span>© 2025 <a href="https://heimlich.studio" class="footer-link">HEIMLICH®</a> <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER/releases" class="footer-link">v0.0.4</a></span>
         </div>
       </div>
     </div>
@@ -315,6 +352,16 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
           <div class="preview-container">
             <div class="preview-header">
               <h3>Preview</h3>
+              <div class="sort-options">
+                <span>Sort by:</span>
+                <select id="previewSortSelect">
+                  <option value="none">Custom (Drag)</option>
+                  <option value="name">Name</option>
+                  <option value="date">Date Modified</option>
+                  <option value="size">Size</option>
+                  <option value="type">Type</option>
+                </select>
+              </div>
             </div>
             <div id="previewArea" class="preview-area"></div>
           </div>
@@ -599,6 +646,185 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
               </div>
             </div>
             <div id="copyStatus" class="copy-status hidden">Copied to clipboard!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button id="closeSettingsModalBtn" class="btn-close modal-close-btn">&times;</button>
+      </div>
+      <div class="settings-tabs">
+        <div class="settings-tab active" data-tab="general">General</div>
+        <div class="settings-tab" data-tab="account">Account</div>
+        <div class="settings-tab" data-tab="files">Files</div>
+        <div class="settings-tab" data-tab="about">About</div>
+      </div>
+      <div class="modal-body">
+        <!-- General Tab -->
+        <div class="settings-content active" id="general-settings">
+          <div class="settings-group">
+            <h4>Application Settings</h4>
+            <div class="settings-item">
+              <label for="darkModeToggle">Dark Mode</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="darkModeToggle">
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+            <div class="settings-item">
+              <label for="languageSelect">Language</label>
+              <select id="languageSelect">
+                <option value="en">English</option>
+                <option value="ko">한국어</option>
+                <option value="ja">日本語</option>
+                <option value="zh">中文</option>
+              </select>
+            </div>
+            <div class="settings-item">
+              <label for="autoSaveToggle">Auto-save Settings</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="autoSaveToggle" checked>
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Tab -->
+        <div class="settings-content" id="account-settings">
+          <div class="settings-group">
+            <h4>Account Information</h4>
+            <div class="account-profile">
+              <div class="account-header">
+                <div class="profile-avatar-container">
+                  <img src="assets/default-avatar.png" alt="Profile Picture" id="profilePicture" class="profile-avatar">
+                  <button class="profile-avatar-edit" id="changeAvatarBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                </div>
+                <div class="profile-info">
+                  <h3 class="account-title">User Profile</h3>
+                  <p class="account-subtitle">Manage your account information</p>
+                </div>
+              </div>
+              
+              <div class="account-info">
+                <div class="account-field">
+                  <label for="userDisplayName">Display Name</label>
+                  <input type="text" id="userDisplayName" placeholder="Your Name">
+                </div>
+                <div class="account-field">
+                  <label for="userEmail">Email</label>
+                  <input type="email" id="userEmail" placeholder="your@email.com">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-group">
+            <h4>Connect with HYPER Account</h4>
+            <div class="hyper-connect">
+              <div class="hyper-connect-info">
+                <h5>Boost Your Experience</h5>
+                <p>Connect with HYPER to sync settings across devices and access premium features.</p>
+              </div>
+              <a href="https://hyper.bz" id="connectHyperBtn" class="btn-primary" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">Connect with HYPER</a>
+            </div>
+          </div>
+          
+          <div class="account-actions">
+            <button id="saveAccountBtn" class="btn-primary btn-small">Save Changes</button>
+            <button id="signOutBtn" class="btn-outline btn-small">Sign Out</button>
+          </div>
+        </div>
+
+        <!-- Files Tab -->
+        <div class="settings-content" id="files-settings">
+          <div class="settings-group">
+            <h4>File Operations</h4>
+            <div class="settings-item">
+              <label for="confirmRenameToggle">Confirm before renaming</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="confirmRenameToggle" checked>
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+            <div class="settings-item">
+              <label for="backupOriginalToggle">Backup original filenames</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="backupOriginalToggle">
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+            <div class="settings-item">
+              <label for="defaultFolderPath">Default Save Location</label>
+              <div class="path-input-group">
+                <input type="text" id="defaultFolderPath" placeholder="Select default folder" readonly>
+                <button id="browseFolderBtn" class="btn-outline btn-small">Browse</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-group">
+            <h4>File Handling</h4>
+            <div class="settings-item">
+              <label for="maxFileLimit">Maximum Files (0 = unlimited)</label>
+              <input type="number" id="maxFileLimit" min="0" max="1000" value="100">
+            </div>
+            <div class="settings-item">
+              <label for="thumbnailQualitySelect">Thumbnail Quality</label>
+              <select id="thumbnailQualitySelect">
+                <option value="low">Low (faster)</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High (slower)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- About Tab -->
+        <div class="settings-content" id="about-settings">
+          <div class="settings-group">
+            <h4>About</h4>
+            <div class="settings-about">
+              <p>RENAMER by HEIMLICH® Version 0.0.4</p>
+              <p>© 2025 HEIMLICH</p>
+              <div class="settings-links">
+                <a href="https://heimlich.studio" class="settings-link">Website</a>
+                <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER" class="settings-link">GitHub</a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-group">
+            <h4>System Information</h4>
+            <div class="system-info">
+              <div class="info-item">
+                <span class="info-label">OS:</span>
+                <span class="info-value" id="systemOS">-</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Application Version:</span>
+                <span class="info-value">0.0.4</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Electron:</span>
+                <span class="info-value" id="electronVersion">-</span>
+              </div>
+            </div>
+            
+            <div class="update-section">
+              <button id="checkUpdatesBtn" class="btn-outline btn-small">Check for Updates</button>
+            </div>
           </div>
         </div>
       </div>

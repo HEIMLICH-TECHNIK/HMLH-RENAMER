@@ -1,100 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RENAMER by HEIMLICH®</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RENAMER by HEIMLICH®</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <div class="app-container">
-    <!-- Left sidebar with rename settings -->
-    <div class="sidebar">
-      <!-- 고정 상단 영역 -->
-      <div class="sidebar-fixed-header">
-        <div class="logo-header">
-          <div class="logo">
-            <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="FILE RENAMER by HEIMLICH" class="logo-image">
-          </div>
-          <button id="profileBtn" class="profile-btn" title="Settings">
+    <div class="app-container">
+        <!-- Left sidebar with rename settings -->
+        <div class="sidebar">
+            <!-- 고정 상단 영역 -->
+            <div class="sidebar-fixed-header">
+                <div class="logo-header">
+                    <div class="logo">
+                        <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="FILE RENAMER by HEIMLICH" class="logo-image">
+                    </div>
+                    <button id="profileBtn" class="profile-btn" title="Settings">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
           </button>
-        </div>
-        
-        <div class="method-tabs">
-          <div class="tab active" data-method="pattern">Pattern</div>
-          <div class="tab" data-method="replace">Replace</div>
-          <div class="tab" data-method="regex">Regex</div>
-          <div class="tab" data-method="word">Word</div>
-          <div class="tab" data-method="numbering">Number</div>
-          <div class="tab" data-method="expression">Exp</div>
-        </div>
-      </div>
-      
-      <!-- 스크롤 가능한 중간 영역 -->
-      <div class="rename-settings">
-        <!-- Pattern Method -->
-        <div class="method-content active" id="pattern-panel">
-          <div class="input-group">
-            <input type="text" id="patternInput" placeholder="Format: {name}_{num}.{ext}" value="{name}">
-          </div>
-          <div class="hint">
-            <span>Basic variables: {name}, {ext}, {num}, {date}</span>
-            <button id="togglePatternVarsBtn" class="btn-outline btn-small">More Variables ▼</button>
-          </div>
-          
-          <div class="pattern-extended-vars hint" id="patternExtendedVars" style="display:none;">
-            <h4>Media Variables:</h4>
-            <div class="var-list">
-              <div class="var-item"><span class="var">{width}, {height}</span> - Image/video dimensions</div>
-              <div class="var-item"><span class="var">{duration}, {duration_fmt}</span> - Video length in seconds, formatted time (HH:MM:SS)</div>
-              <div class="var-item"><span class="var">{frames}</span> - Total number of frames in video</div>
-              <div class="var-item"><span class="var">{colorspace}</span> - Color space of the video</div>
-              <div class="var-item"><span class="var">{log}</span> - Color transfer characteristic (log, linear, etc.)</div>
-              <div class="var-item"><span class="var">{codec}</span> - Video codec (H264, HEVC, ProRes, etc.)</div>
-              <div class="var-item"><span class="var">{bit_depth}</span> - Video bit depth (8-bit, 10-bit, etc.)</div>
-              <div class="var-item"><span class="var">{chroma_subsampling}</span> - Chroma subsampling (4:4:4, 4:2:2, 4:2:0)</div>
-              <div class="var-item"><span class="var">{scan_type}</span> - Progressive or Interlaced</div>
-              <div class="var-item"><span class="var">{bitrate}</span> - Video bitrate in Mbps</div>
-              <div class="var-item"><span class="var">{pixel_format}</span> - Raw pixel format</div>
-              <div class="var-item"><span class="var">{is_image}, {is_video}</span> - Outputs "image" or "video" text</div>
+                </div>
+
+                <div class="method-tabs">
+                    <div class="tab active" data-method="pattern">Pattern</div>
+                    <div class="tab" data-method="replace">Replace</div>
+                    <div class="tab" data-method="regex">Regex</div>
+                    <div class="tab" data-method="word">Word</div>
+                    <div class="tab" data-method="numbering">Number</div>
+                    <div class="tab" data-method="expression">Exp</div>
+                </div>
             </div>
-            
-            <h4>Conditional Variables:</h4>
-            <div class="var-list">
-              <div class="var-item"><span class="var">{if_image:text}</span> - Include text only for images</div>
-              <div class="var-item"><span class="var">{if_video:text}</span> - Include text only for videos</div>
-              <div class="var-item"><span class="var">{if_landscape:text}</span> - Include text only for landscape orientation</div>
-              <div class="var-item"><span class="var">{if_portrait:text}</span> - Include text only for portrait orientation</div>
-            </div>
-            
-            <h4>Format Variables:</h4>
-            <div class="var-list">
-              <div class="var-item"><span class="var">{upper_name}, {lower_name}</span> - Uppercase/lowercase filename</div>
-              <div class="var-item"><span class="var">{padnum3}</span> - 3-digit zero-padded number</div>
-            </div>
-            
-            <div class="example-small">
-              <div class="example-title">Examples:</div>
-              <code>{name}_{width}x{height}</code>
-              <code>{if_video:VIDEO_}{name}_{duration_fmt}</code>
-              <code>{if_image:{if_landscape:LANDSCAPE_}{if_portrait:PORTRAIT_}}{name}</code>
-            </div>
-          </div>
-          
-          <!-- 날짜 포맷 설정 UI (기본적으로 숨겨져 있음) -->
-          <div class="date-format-container" id="dateFormatContainer">
-            <div class="format-header">
-              <span class="format-title">Date Format</span>
-              <div class="format-toggle" id="toggleDateOptions">Options ▼</div>
-            </div>
-            
-            <div class="date-format-options" id="dateFormatOptions">
-              <div class="format-option">
-                <select id="dateFormatPreset">
+
+            <!-- 스크롤 가능한 중간 영역 -->
+            <div class="rename-settings">
+                <!-- Pattern Method -->
+                <div class="method-content active" id="pattern-panel">
+                    <div class="input-group">
+                        <input type="text" id="patternInput" placeholder="Format: {name}_{num}.{ext}" value="{name}">
+                    </div>
+                    <div class="hint">
+                        <span>Basic variables: <span class="clickable-var">{name}</span>, <span class="clickable-var">{ext}</span>, <span class="clickable-var">{num}</span>, <span class="clickable-var">{date}</span></span>
+                        <button id="togglePatternVarsBtn" class="btn-outline btn-small">More Variables ▼</button>
+                    </div>
+
+                    <div class="pattern-extended-vars hint" id="patternExtendedVars" style="display:none;">
+                        <h4>Media Variables:</h4>
+                        <div class="var-list">
+                            <div class="var-item"><span class="var"><span class="clickable-var">{width}</span></span>, <span class="var"><span class="clickable-var">{height}</span></span> - Image/video dimensions</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{duration}</span></span>, <span class="var"><span class="clickable-var">{duration_fmt}</span></span> - Video length in seconds, formatted time (HH:MM:SS)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{frames}</span></span> - Total number of frames in video</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{colorspace}</span></span> - Color space of the video</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{log}</span></span> - Color transfer characteristic (log, linear, etc.)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{codec}</span></span> - Video codec (H264, HEVC, ProRes, etc.)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{bit_depth}</span></span> - Video bit depth (8-bit, 10-bit, etc.)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{chroma_subsampling}</span></span> - Chroma subsampling (4:4:4, 4:2:2, 4:2:0)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{scan_type}</span></span> - Progressive or Interlaced</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{bitrate}</span></span> - Video bitrate in Mbps</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{pixel_format}</span></span> - Raw pixel format</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{is_image}</span></span>, <span class="var"><span class="clickable-var">{is_video}</span></span> - Outputs "image" or "video" text</div>
+                        </div>
+
+                        <h4>Conditional Variables:</h4>
+                        <div class="var-list">
+                            <div class="var-item"><span class="var"><span class="clickable-var">{if_image:text}</span></span> - Include text only for images</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{if_video:text}</span></span> - Include text only for videos</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{if_landscape:text}</span></span> - Include text only for landscape orientation</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{if_portrait:text}</span></span> - Include text only for portrait orientation</div>
+                        </div>
+
+                        <h4>Format Variables:</h4>
+                        <div class="var-list">
+                            <div class="var-item"><span class="var"><span class="clickable-var">{upper_name}</span></span>, <span class="var"><span class="clickable-var">{lower_name}</span></span> - Uppercase/lowercase filename</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{padnum3}</span></span> - 3-digit zero-padded number</div>
+                        </div>
+
+                        <div class="example-small">
+                            <div class="example-title">Examples:</div>
+                            <code class="clickable-example">{name}_{width}x{height}</code>
+                            <code class="clickable-example">{if_video:VIDEO_}{name}_{duration_fmt}</code>
+                            <code class="clickable-example">{if_image:{if_landscape:LANDSCAPE_}{if_portrait:PORTRAIT_}}{name}</code>
+                        </div>
+                    </div>
+
+                    <!-- 날짜 포맷 설정 UI (기본적으로 숨겨져 있음) -->
+                    <div class="date-format-container" id="dateFormatContainer">
+                        <div class="format-header">
+                            <span class="format-title">Date Format</span>
+                            <div class="format-toggle" id="toggleDateOptions">Options ▼</div>
+                        </div>
+
+                        <div class="date-format-options" id="dateFormatOptions">
+                            <div class="format-option">
+                                <select id="dateFormatPreset">
                   <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                   <option value="YYYYMMDD">YYYYMMDD</option>
                   <option value="DD-MM-YYYY">DD-MM-YYYY</option>
@@ -103,734 +105,812 @@
                   <option value="YY-MM-DD">YY-MM-DD</option>
                   <option value="custom">Custom format...</option>
                 </select>
-              </div>
-              
-              <div class="custom-format" id="customDateFormat">
-                <input type="text" id="dateFormatCustom" placeholder="e.g. YYYY/MM/DD HH:mm">
-                <div class="format-help">
-                  <div class="help-item"><span>YYYY</span>: Year (4 digits)</div>
-                  <div class="help-item"><span>YY</span>: Year (2 digits)</div>
-                  <div class="help-item"><span>MM</span>: Month (01-12)</div>
-                  <div class="help-item"><span>DD</span>: Day (01-31)</div>
-                  <div class="help-item"><span>HH</span>: Hours (00-23)</div>
-                  <div class="help-item"><span>mm</span>: Minutes (00-59)</div>
-                  <div class="help-item"><span>ss</span>: Seconds (00-59)</div>
+                            </div>
+
+                            <div class="custom-format" id="customDateFormat">
+                                <input type="text" id="dateFormatCustom" placeholder="e.g. YYYY/MM/DD HH:mm">
+                                <div class="format-help">
+                                    <div class="help-item"><span>YYYY</span>: Year (4 digits)</div>
+                                    <div class="help-item"><span>YY</span>: Year (2 digits)</div>
+                                    <div class="help-item"><span>MM</span>: Month (01-12)</div>
+                                    <div class="help-item"><span>DD</span>: Day (01-31)</div>
+                                    <div class="help-item"><span>HH</span>: Hours (00-23)</div>
+                                    <div class="help-item"><span>mm</span>: Minutes (00-59)</div>
+                                    <div class="help-item"><span>ss</span>: Seconds (00-59)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Find & Replace Method -->
-        <div class="method-content" id="replace-panel">
-          <div class="input-group">
-            <input type="text" id="findText" placeholder="Find text">
-          </div>
-          
-          <button class="swap-inputs-btn" id="swapReplaceBtn" title="Swap find and replace">
+
+                <!-- Find & Replace Method -->
+                <div class="method-content" id="replace-panel">
+                    <div class="input-group">
+                        <input type="text" id="findText" placeholder="Find text">
+                    </div>
+
+                    <button class="swap-inputs-btn" id="swapReplaceBtn" title="Swap find and replace">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <polyline points="19 12 12 19 5 12"></polyline>
             </svg>
           </button>
-          
-          <div class="input-group">
-            <input type="text" id="replaceText" placeholder="Replace with">
-          </div>
-          <div class="checkbox-group">
-            <label class="checkbox">
+
+                    <div class="input-group">
+                        <input type="text" id="replaceText" placeholder="Replace with">
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox">
               <input type="checkbox" id="caseSensitive">
               <span>Case sensitive</span>
             </label>
-          </div>
-        </div>
-        
-        <!-- Regex Method -->
-        <div class="method-content" id="regex-panel">
-          <div class="input-group">
-            <input type="text" id="regexPattern" placeholder="Regular expression">
-          </div>
-          <div class="input-group">
-            <input type="text" id="regexReplacement" placeholder="Replacement ($1, $2...)">
-          </div>
-        </div>
-        
-        <!-- Word Selection Method -->
-        <div class="method-content" id="word-panel">
-          <div class="hint">
-            <span>Select words from filenames to modify</span>
-          </div>
-          <div class="checkbox-group">
-            <label class="checkbox">
+                    </div>
+                </div>
+
+                <!-- Regex Method -->
+                <div class="method-content" id="regex-panel">
+                    <div class="input-group">
+                        <input type="text" id="regexPattern" placeholder="Regular expression">
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="regexReplacement" placeholder="Replacement ($1, $2...)">
+                    </div>
+                </div>
+
+                <!-- Word Selection Method -->
+                <div class="method-content" id="word-panel">
+                    <div class="hint">
+                        <span>Select words from filenames to modify</span>
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox">
               <input type="checkbox" id="applyToAllFiles">
               <span>Apply to all files with same patterns</span>
             </label>
-          </div>
-          <div class="checkbox-group">
-            <label class="checkbox">
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox">
               <input type="checkbox" id="applySimilarPattern">
               <span>Apply to similar pattern files only</span>
             </label>
-          </div>
-          <div class="checkbox-group">
-            <label class="checkbox">
+                    </div>
+                    <div class="checkbox-group">
+                        <label class="checkbox">
               <input type="checkbox" id="treatSelectionAsOne">
               <span>Treat consecutive selections as one word</span>
             </label>
-          </div>
-          <div class="input-group" id="wordRulesContainer">
-            <!-- Word rules will be dynamically added here -->
-          </div>
-          <button id="addWordRuleBtn" class="btn-outline">+ Add Rule</button>
-        </div>
-        
-        <!-- Numbering Method - NEW -->
-        <div class="method-content" id="numbering-panel">
-          <div class="input-group">
-            <label class="input-label">Format</label>
-            <input type="text" id="numberingPattern" placeholder="Format: {name}_{num}.{ext}" value="{name}_{num}">
-          </div>
-          
-          <div class="input-group number-settings">
-            <div class="number-setting">
-              <label class="input-label">Start Number</label>
-              <input type="number" id="startNumber" min="0" value="1">
-            </div>
-            <div class="number-setting">
-              <label class="input-label">Padding</label>
-              <input type="number" id="numberPadding" min="0" max="10" value="2">
-            </div>
-            <div class="number-setting">
-              <label class="input-label">Step</label>
-              <input type="number" id="numberStep" min="1" value="1">
-            </div>
-          </div>
-          
-          <div class="input-group">
-            <label class="input-label">Sort By</label>
-            <select id="sortingMethod">
+                    </div>
+                    <div class="input-group" id="wordRulesContainer">
+                        <!-- Word rules will be dynamically added here -->
+                    </div>
+                    <button id="addWordRuleBtn" class="btn-outline">+ Add Rule</button>
+                </div>
+
+                <!-- Numbering Method - NEW -->
+                <div class="method-content" id="numbering-panel">
+                    <div class="input-group">
+                        <label class="input-label">Format</label>
+                        <input type="text" id="numberingPattern" placeholder="Format: {name}_{num}.{ext}" value="{name}_{num}">
+                    </div>
+
+                    <div class="input-group number-settings">
+                        <div class="number-setting">
+                            <label class="input-label">Start Number</label>
+                            <input type="number" id="startNumber" min="0" value="1">
+                        </div>
+                        <div class="number-setting">
+                            <label class="input-label">Padding</label>
+                            <input type="number" id="numberPadding" min="0" max="10" value="2">
+                        </div>
+                        <div class="number-setting">
+                            <label class="input-label">Step</label>
+                            <input type="number" id="numberStep" min="1" value="1">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Sort By</label>
+                        <select id="sortingMethod">
               <option value="name">Name</option>
               <option value="date">Date Modified</option>
               <option value="size">File Size</option>
               <option value="random">Random</option>
             </select>
-          </div>
-          
-          <div class="checkbox-group">
-            <label class="checkbox">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label class="checkbox">
               <input type="checkbox" id="reverseOrder">
               <span>Reverse Order</span>
             </label>
-          </div>
-        </div>
-        
-        <!-- Expression Method - NEW -->
-        <div class="method-content" id="expression-panel">
-          <div class="hint">
-            <span>Use expressions like Houdini for advanced renaming</span>
-          </div>
-          
-          <div class="input-group">
-            <textarea id="expressionInput" rows="5" placeholder="Example: 
+                    </div>
+                </div>
+
+                <!-- Expression Method - NEW -->
+                <div class="method-content" id="expression-panel">
+                    <div class="hint">
+                        <span>Use expressions like Houdini for advanced renaming</span>
+                    </div>
+
+                    <div class="input-group">
+                        <textarea id="expressionInput" rows="5" placeholder="Example: 
 name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
-          </div>
-          
-          <div class="expression-actions">
-            <button id="expressionExamplesBtn" class="btn-outline btn-small">Examples</button>
-            <button id="toggleExpressionHelpBtn" class="btn-outline btn-small">Help ▼</button>
-          </div>
-          
-          <div class="hint expression-help" id="expressionHelp">
-            <h4>Variables:</h4>
-            <div class="var-list">
-              <div class="var-item"><span class="var">name</span> - File name without extension</div>
-              <div class="var-item"><span class="var">fileext</span> - File extension</div>
-              <div class="var-item"><span class="var">index</span> - File index (0-based)</div>
-              <div class="var-item"><span class="var">width, height</span> - Image width/height in pixels</div>
-              <div class="var-item"><span class="var">duration</span> - Video duration in seconds</div>
-              <div class="var-item"><span class="var">frames</span> - Total number of frames in video</div>
-              <div class="var-item"><span class="var">colorspace</span> - Color space of the video</div>
-              <div class="var-item"><span class="var">log</span> - Color transfer characteristic (log, linear, etc.)</div>
-              <div class="var-item"><span class="var">isImage</span> - True if file is image</div>
-              <div class="var-item"><span class="var">isVideo</span> - True if file is video</div>
-              <div class="var-item"><span class="var">date</span> - File creation date</div>
-              <div class="var-item"><span class="var">codec</span> - Video codec (H264, HEVC, ProRes, etc.)</div>
-              <div class="var-item"><span class="var">bitDepth</span> - Video bit depth (8-bit, 10-bit, etc.)</div>
-              <div class="var-item"><span class="var">chromaSubsampling</span> - Chroma subsampling (4:4:4, 4:2:2, 4:2:0)</div>
-              <div class="var-item"><span class="var">scanType</span> - Progressive or Interlaced</div>
-              <div class="var-item"><span class="var">bitrate</span> - Video bitrate in Mbps</div>
-              <div class="var-item"><span class="var">pixelFormat</span> - Raw pixel format</div>
-              <div class="var-item"><span class="note">Note: Special formats (EXR, DPX, TIF) and videos are supported</span></div>
-              <div class="var-item"><span class="note">Supported video formats: MP4, MOV, AVI, MKV, WEBM, WMV, FLV, M4V, 3GP, MXF, R3D (RED), BRAW (Blackmagic), ARI (ARRI), ARW/SRAW/RAW (Camera raw)</span></div>
+                    </div>
+
+                    <div class="expression-actions">
+                        <button id="expressionExamplesBtn" class="btn-outline btn-small">Examples</button>
+                        <button id="toggleExpressionHelpBtn" class="btn-outline btn-small">Help ▼</button>
+                    </div>
+
+                    <div class="hint expression-help" id="expressionHelp">
+                        <h4>Variables:</h4>
+                        <div class="var-list">
+                            <div class="var-item"><span class="var"><span class="clickable-var">name</span></span> - File name without extension</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">fileext</span></span> - File extension</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">index</span></span> - File index (0-based)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">width</span></span>, <span class="var"><span class="clickable-var">height</span></span> - Image width/height in pixels</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">duration</span></span> - Video duration in seconds</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">frames</span></span> - Total number of frames in video</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">colorspace</span></span> - Color space of the video</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">log</span></span> - Color transfer characteristic (log, linear, etc.)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">isImage</span></span> - True if file is image</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">isVideo</span></span> - True if file is video</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">date</span></span> - File creation date</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">codec</span></span> - Video codec (H264, HEVC, ProRes, etc.)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">bitDepth</span></span> - Video bit depth (8-bit, 10-bit, etc.)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">chromaSubsampling</span></span> - Chroma subsampling (4:4:4, 4:2:2, 4:2:0)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">scanType</span></span> - Progressive or Interlaced</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">bitrate</span></span> - Video bitrate in Mbps</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">pixelFormat</span></span> - Raw pixel format</div>
+                            <div class="var-item"><span class="note">Note: Special formats (EXR, DPX, TIF) and videos are supported</span></div>
+                            <div class="var-item"><span class="note">Supported video formats: MP4, MOV, AVI, MKV, WEBM, WMV, FLV, M4V, 3GP, MXF, R3D (RED), BRAW (Blackmagic), ARI (ARRI), ARW/SRAW/RAW (Camera raw)</span></div>
+                        </div>
+
+                        <h4>Functions:</h4>
+                        <div class="var-list">
+                            <div class="var-item"><span class="var"><span class="clickable-var">padnum(num, len)</span></span> - Zero-padded number</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">upper(s)</span></span> - Uppercase string</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">lower(s)</span></span> - Lowercase string</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">cond(cond, t, f)</span></span> - Conditional (if-then-else)</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">substr(s, start, len)</span></span> - Substring</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">formatTime(seconds)</span></span> - Format to HH:MM:SS</div>
+                        </div>
+
+                        <h4>Examples:</h4>
+                        <div class="var-list">
+                            <div class="var-item"><code class="clickable-example">name + "_" + padnum(index + 1, 3)</code></div>
+                            <div class="var-item"><code class="clickable-example">upper(name) + "_" + date</code></div>
+                            <div class="var-item"><code class="clickable-example">cond(isVideo, "VID_" + formatTime(duration), name)</code></div>
+                            <div class="var-item"><code class="clickable-example">cond(width > height, "landscape_", "portrait_") + name</code></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <h4>Functions:</h4>
-            <div class="var-list">
-              <div class="var-item"><span class="var">padnum(num, len)</span> - Zero-padded number</div>
-              <div class="var-item"><span class="var">upper(s)</span> - Uppercase string</div>
-              <div class="var-item"><span class="var">lower(s)</span> - Lowercase string</div>
-              <div class="var-item"><span class="var">cond(cond, t, f)</span> - Conditional (if-then-else)</div>
-              <div class="var-item"><span class="var">substr(s, start, len)</span> - Substring</div>
-              <div class="var-item"><span class="var">formatTime(seconds)</span> - Format to HH:MM:SS</div>
+
+            <!-- 고정 하단 영역 -->
+            <div class="sidebar-fixed-footer">
+                <!-- Rules Management Section -->
+                <div class="rules-management">
+                    <div class="rules-header">
+                        <h3>Rules</h3>
+                        <div class="rule-buttons">
+                            <button id="saveRuleBtn" class="btn-outline btn-small">Save</button>
+                            <button id="viewRulesBtn" class="btn-outline btn-small">View</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="applyBtn" class="btn-primary" disabled>Rename Files</button>
+
+                <div class="sidebar-footer">
+                    <button id="clearBtn" class="btn-text">Clear</button>
+                </div>
+
+                <div class="sidebar-footer-version">
+                    <span>© 2025 <a href="https://heimlich.studio" class="footer-link">HEIMLICH®</a> <button id="versionInfoBtn" class="footer-link btn-text">v0.0.4</button></span>
+                </div>
             </div>
-            
-            <h4>Examples:</h4>
-            <div class="var-list">
-              <div class="var-item"><code>name + "_" + padnum(index + 1, 3)</code></div>
-              <div class="var-item"><code>upper(name) + "_" + date</code></div>
-              <div class="var-item"><code>cond(isVideo, "VID_" + formatTime(duration), name)</code></div>
-              <div class="var-item"><code>cond(width > height, "landscape_", "portrait_") + name</code></div>
-            </div>
-          </div>
         </div>
-      </div>
-      
-      <!-- 고정 하단 영역 -->
-      <div class="sidebar-fixed-footer">
-        <!-- Rules Management Section -->
-        <div class="rules-management">
-          <div class="rules-header">
-            <h3>Rules</h3>
-            <div class="rule-buttons">
-              <button id="saveRuleBtn" class="btn-outline btn-small">Save</button>
-              <button id="viewRulesBtn" class="btn-outline btn-small">View</button>
-            </div>
-          </div>
-        </div>
-        
-        <button id="applyBtn" class="btn-primary" disabled>Rename Files</button>
-        
-        <div class="sidebar-footer">
-          <button id="clearBtn" class="btn-text">Clear</button>
-        </div>
-        
-        <div class="sidebar-footer-version">
-          <span>© 2025 <a href="https://heimlich.studio" class="footer-link">HEIMLICH®</a> <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER/releases" class="footer-link">v0.0.4</a></span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Right content area -->
-    <div class="main-content" id="dropArea">
-      <div class="content-header">
-        <h2>Files</h2>
-        <div class="history-buttons">
-          <button id="undoBtn" class="history-btn disabled" title="Undo" disabled>
+
+        <!-- Right content area -->
+        <div class="main-content" id="dropArea">
+            <div class="content-header">
+                <h2>Files</h2>
+                <div class="history-buttons">
+                    <button id="undoBtn" class="history-btn disabled" title="Undo" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 14L4 9L9 4"></path>
               <path d="M4 9H16C18.7614 9 21 11.2386 21 14C21 16.7614 18.7614 19 16 19H11"></path>
             </svg>
           </button>
-          <button id="redoBtn" class="history-btn disabled" title="Redo" disabled>
+                    <button id="redoBtn" class="history-btn disabled" title="Redo" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M15 14L20 9L15 4"></path>
               <path d="M20 9H8C5.23858 9 3 11.2386 3 14C3 16.7614 5.23858 19 8 19H13"></path>
             </svg>
           </button>
-        </div>
-        <div class="file-count">
-          <span id="fileCount">0</span> files
-        </div>
-      </div>
-      
-      <div class="content-body">
-        <!-- Empty state / Drop indicator -->
-        <div class="empty-drop-area" id="emptyDropArea">
-          <div class="drop-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                </div>
+                <div class="file-count">
+                    <span id="fileCount">0</span> files
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- Empty state / Drop indicator -->
+                <div class="empty-drop-area" id="emptyDropArea">
+                    <div class="drop-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 4V16M12 16L8 12M12 16L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M20 20H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </div>
-          <p>Drop files here to rename them</p>
-          <button id="fileSelectBtn" class="btn-outline">Select Files</button>
-        </div>
-        
-        <!-- Files with preview integrated -->
-        <div class="files-preview" id="filesPreview">
-          <!-- Preview takes full space now -->
-          <div class="preview-container">
-            <div class="preview-header">
-              <h3>Preview</h3>
-              <div class="sort-options">
-                <span>Sort by:</span>
-                <select id="previewSortSelect">
+                    </div>
+                    <p>Drop files here to rename them</p>
+                    <button id="fileSelectBtn" class="btn-outline">Select Files</button>
+                </div>
+
+                <!-- Files with preview integrated -->
+                <div class="files-preview" id="filesPreview">
+                    <!-- Preview takes full space now -->
+                    <div class="preview-container">
+                        <div class="preview-header">
+                            <h3>Preview</h3>
+                            <div class="sort-options">
+                                <span>Sort by:</span>
+                                <select id="previewSortSelect">
                   <option value="none">Custom (Drag)</option>
                   <option value="name">Name</option>
                   <option value="date">Date Modified</option>
                   <option value="size">Size</option>
                   <option value="type">Type</option>
                 </select>
-              </div>
+                            </div>
+                        </div>
+                        <div id="previewArea" class="preview-area"></div>
+                    </div>
+                </div>
             </div>
-            <div id="previewArea" class="preview-area"></div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Results overlay -->
-      <div id="resultArea" class="result-area hidden">
-        <div class="result-container">
-          <div class="result-header">
-            <h3>Results</h3>
-            <button id="closeResultsBtn" class="btn-close">&times;</button>
-          </div>
-          <div id="resultList" class="result-list"></div>
-          <div class="result-actions">
-            <button id="doneBtn" class="btn-primary">Done</button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Rules Modal -->
-      <div id="rulesModal" class="modal-overlay hidden">
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3>Saved Rules</h3>
-            <button id="closeRulesModalBtn" class="btn-close">&times;</button>
-          </div>
-          <div id="modalRulesList" class="modal-body">
-            <!-- Rules will be listed here -->
-          </div>
-        </div>
-      </div>
-      
-      <!-- Input Modal for Rule Name -->
-      <div id="inputModal" class="modal-overlay hidden">
-        <div class="modal-container modal-small">
-          <div class="modal-header">
-            <h3 id="inputModalTitle">Enter Rule Name</h3>
-            <button id="closeInputModalBtn" class="btn-close">&times;</button>
-          </div>
-          <div class="modal-body">
-            <div class="input-group">
-              <input type="text" id="inputModalField" placeholder="Rule name">
+
+            <!-- Results overlay -->
+            <div id="resultArea" class="result-area hidden">
+                <div class="result-container">
+                    <div class="result-header">
+                        <h3>Results</h3>
+                        <button id="closeResultsBtn" class="btn-close">&times;</button>
+                    </div>
+                    <div id="resultList" class="result-list"></div>
+                    <div class="result-actions">
+                        <button id="doneBtn" class="btn-primary">Done</button>
+                    </div>
+                </div>
             </div>
-            <div class="modal-actions">
-              <button id="inputModalCancelBtn" class="btn-secondary">Cancel</button>
-              <button id="inputModalConfirmBtn" class="btn-primary">Save</button>
+
+            <!-- Rules Modal -->
+            <div id="rulesModal" class="modal-overlay hidden">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3>Saved Rules</h3>
+                        <button id="closeRulesModalBtn" class="btn-close">&times;</button>
+                    </div>
+                    <div id="modalRulesList" class="modal-body">
+                        <!-- Rules will be listed here -->
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Expression Examples Modal -->
-      <div id="expressionExamplesModal" class="modal-overlay hidden">
-        <div class="modal-container">
-          <div class="modal-header">
-            <h3>Expression Examples</h3>
-            <button id="closeExpressionExamplesBtn" class="btn-close modal-close-btn">&times;</button>
-          </div>
-          <div class="modal-body examples-modal-body">
-            <div class="examples-container">
-              <div class="example-category">
-                <h4>Basic Usage</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="name + '_' + padnum(index + 1, 3) + '.' + fileext">
-                    <div class="example-name">Sequential Numbering</div>
-                    <code>name + '_' + padnum(index + 1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Adds a 3-digit sequential number to filenames</div>
-                  </div>
-                  <div class="example-item" data-expression="upper(name) + '.' + fileext">
-                    <div class="example-name">Uppercase</div>
-                    <code>upper(name) + '.' + fileext</code>
-                    <div class="example-desc">Converts filename to uppercase</div>
-                  </div>
-                  <div class="example-item" data-expression="lower(name) + '.' + fileext">
-                    <div class="example-name">Lowercase</div>
-                    <code>lower(name) + '.' + fileext</code>
-                    <div class="example-desc">Converts filename to lowercase</div>
-                  </div>
+
+            <!-- Input Modal for Rule Name -->
+            <div id="inputModal" class="modal-overlay hidden">
+                <div class="modal-container modal-small">
+                    <div class="modal-header">
+                        <h3 id="inputModalTitle">Enter Rule Name</h3>
+                        <button id="closeInputModalBtn" class="btn-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="input-group">
+                            <input type="text" id="inputModalField" placeholder="Rule name">
+                        </div>
+                        <div class="modal-actions">
+                            <button id="inputModalCancelBtn" class="btn-secondary">Cancel</button>
+                            <button id="inputModalConfirmBtn" class="btn-primary">Save</button>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              
-              <div class="example-category">
-                <h4>Image Operations</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="cond(isImage, name + '_' + width + 'x' + height, name) + '.' + fileext">
-                    <div class="example-name">Add Image Dimensions</div>
-                    <code>cond(isImage, name + '_' + width + 'x' + height, name) + '.' + fileext</code>
-                    <div class="example-desc">Adds width×height to image filenames</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isImage, cond(width > height, 'landscape_', 'portrait_'), '') + name + '.' + fileext">
-                    <div class="example-name">Orientation Prefix</div>
-                    <code>cond(isImage, cond(width > height, 'landscape_', 'portrait_'), '') + name + '.' + fileext</code>
-                    <div class="example-desc">Adds landscape/portrait prefix based on dimensions</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isImage && width >= 1920, 'HD_', '') + name + '.' + fileext">
-                    <div class="example-name">HD Image Marker</div>
-                    <code>cond(isImage && width >= 1920, 'HD_', '') + name + '.' + fileext</code>
-                    <div class="example-desc">Adds HD_ prefix to images at least 1920px wide</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="example-category">
-                <h4>Advanced Patterns</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="'IMG_' + date + '_' + padnum(index + 1, 4) + '.' + fileext">
-                    <div class="example-name">Date-Based Naming</div>
-                    <code>'IMG_' + date + '_' + padnum(index + 1, 4) + '.' + fileext</code>
-                    <div class="example-desc">Creates filename with date and sequence number</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(index % 2 === 0, 'even_', 'odd_') + name + '.' + fileext">
-                    <div class="example-name">Even/Odd Prefix</div>
-                    <code>cond(index % 2 === 0, 'even_', 'odd_') + name + '.' + fileext</code>
-                    <div class="example-desc">Adds even_ or odd_ prefix based on file index</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + substr(date, 0, 4) + '.' + fileext">
-                    <div class="example-name">Year Suffix</div>
-                    <code>name + '_' + substr(date, 0, 4) + '.' + fileext</code>
-                    <div class="example-desc">Adds the year from date as a suffix</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="example-category">
-                <h4>VFX Workflow</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext">
-                    <div class="example-name">Shot Versioning</div>
-                    <code>'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Creates shot number with version (shot_0001_v001)</div>
-                  </div>
-                  <div class="example-item" data-expression="name.split('_')[0] + '_' + name.split('_')[1] + '_' + lower(cond(isImage, 'beauty', 'comp')) + '.' + fileext">
-                    <div class="example-name">Render Pass Naming</div>
-                    <code>name.split('_')[0] + '_' + name.split('_')[1] + '_' + lower(cond(isImage, 'beauty', 'comp')) + '.' + fileext</code>
-                    <div class="example-desc">Adds render pass type to shot structure</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext">
-                    <div class="example-name">Frame Range</div>
-                    <code>name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext</code>
-                    <div class="example-desc">Adds frame range to filename (e.g. shot_fr0001-0100)</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext">
-                    <div class="example-name">Frame Rate</div>
-                    <code>name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext</code>
-                    <div class="example-desc">Adds estimated frame rate to filename based on frames/duration</div>
-                  </div>
-                  <div class="example-item" data-expression="'proj_' + name + '_' + width + 'x' + height + '_' + padnum(index + 1, 4) + '.' + fileext">
-                    <div class="example-name">Project Asset Naming</div>
-                    <code>'proj_' + name + '_' + width + 'x' + height + '_' + padnum(index + 1, 4) + '.' + fileext</code>
-                    <div class="example-desc">Creates project-based asset name with resolution</div>
-                  </div>
-                  <div class="example-item" data-expression="substr(name, 0, 3) + '_' + cond(width >= 3840, '4K', cond(width >= 1920, '2K', 'HD')) + '_v' + padnum(index + 1, 3) + '.' + fileext">
-                    <div class="example-name">Resolution-Based Versioning</div>
-                    <code>substr(name, 0, 3) + '_' + cond(width >= 3840, '4K', cond(width >= 1920, '2K', 'HD')) + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Names files based on prefix, resolution and version</div>
-                  </div>
-                  <div class="example-item" data-expression="'COMP_' + name + '_' + date.replace(/-/g, '') + '_' + cond(index < 9, 'WIP0' + (index + 1), 'WIP' + (index + 1)) + '.' + fileext">
-                    <div class="example-name">VFX Work-in-Progress</div>
-                    <code>'COMP_' + name + '_' + date.replace(/-/g, '') + '_' + cond(index < 9, 'WIP0' + (index + 1), 'WIP' + (index + 1)) + '.' + fileext</code>
-                    <div class="example-desc">Creates WIP file naming with date stamp</div>
-                  </div>
-                  <div class="example-item" data-expression="'SQ' + padnum(index+1, 2) + '_' + name + '_KEY' + padnum(Math.round(frames/5), 3) + '.' + fileext">
-                    <div class="example-name">Keyframe Markers</div>
-                    <code>'SQ' + padnum(index+1, 2) + '_' + name + '_KEY' + padnum(Math.round(frames/5), 3) + '.' + fileext</code>
-                    <div class="example-desc">Names files to represent keyframes in animation sequence</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="example-category">
-                <h4>2D/3D Production</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="'sc' + padnum(index + 1, 3) + '_sh' + padnum(1, 4) + '_' + name + '_v' + padnum(1, 3) + '.' + fileext">
-                    <div class="example-name">Scene/Shot Organization</div>
-                    <code>'sc' + padnum(index + 1, 3) + '_sh' + padnum(1, 4) + '_' + name + '_v' + padnum(1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Complete scene/shot/element/version structure</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + cond(fileext === '.exr', 'multipass', 'single') + '_v' + padnum(index + 1, 3) + '.' + fileext">
-                    <div class="example-name">EXR Pass Identifier</div>
-                    <code>name + '_' + cond(fileext === '.exr', 'multipass', 'single') + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Identifies EXR files as multipass or single layer</div>
-                  </div>
-                  <div class="example-item" data-expression="'ae_' + name + '_' + date.replace(/-/g, '') + '_r' + padnum(index + 1, 2) + '.' + fileext">
-                    <div class="example-name">After Effects Project</div>
-                    <code>'ae_' + name + '_' + date.replace(/-/g, '') + '_r' + padnum(index + 1, 2) + '.' + fileext</code>
-                    <div class="example-desc">After Effects project naming with date and revision</div>
-                  </div>
-                  <div class="example-item" data-expression="name.replace(/\s+/g, '_') + '_' + cond(fileext.toLowerCase() === '.blend', '3d', '2d') + '_asset_v' + padnum(index + 1, 3) + '.' + fileext">
-                    <div class="example-name">2D/3D Asset Naming</div>
-                    <code>name.replace(/\s+/g, '_') + '_' + cond(fileext.toLowerCase() === '.blend', '3d', '2d') + '_asset_v' + padnum(index + 1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Categorizes assets as 2D or 3D based on extension</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + cond(width/height > 2, 'pano', cond(width/height < 1, 'vert', 'std')) + '.' + fileext">
-                    <div class="example-name">Panoramic/Vertical Identifier</div>
-                    <code>name + '_' + cond(width/height > 2, 'pano', cond(width/height < 1, 'vert', 'std')) + '.' + fileext</code>
-                    <div class="example-desc">Identifies panoramic, vertical or standard aspect ratios</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="example-category">
-                <h4>Nuke/Compositing</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="'comp_' + name + '_' + ['beauty', 'diffuse', 'spec', 'shadow', 'ao'][index % 5] + '.' + fileext">
-                    <div class="example-name">Render Passes</div>
-                    <code>'comp_' + name + '_' + ['beauty', 'diffuse', 'spec', 'shadow', 'ao'][index % 5] + '.' + fileext</code>
-                    <div class="example-desc">Names render passes for compositing workflow</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + cond(fileext === '.nk', 'nuke_v', 'plate_v') + padnum(index + 1, 3) + '.' + fileext">
-                    <div class="example-name">Nuke Script Versioning</div>
-                    <code>name + '_' + cond(fileext === '.nk', 'nuke_v', 'plate_v') + padnum(index + 1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Versions Nuke scripts and plates differently</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(fileext === '.dpx' || fileext === '.exr', 'plate_', 'comp_') + name + '_' + width + 'x' + height + '.' + fileext">
-                    <div class="example-name">Plate/Comp Distinction</div>
-                    <code>cond(fileext === '.dpx' || fileext === '.exr', 'plate_', 'comp_') + name + '_' + width + 'x' + height + '.' + fileext</code>
-                    <div class="example-desc">Differentiates between plates and comps based on extension</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + padnum(index * 10, 4) + '_' + cond(isImage, 'frame', 'anim') + '.' + fileext">
-                    <div class="example-name">Frame Numbering</div>
-                    <code>name + '_' + padnum(index * 10, 4) + '_' + cond(isImage, 'frame', 'anim') + '.' + fileext</code>
-                    <div class="example-desc">Creates frame numbers for image sequences</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + ['matte', 'key', 'roto', 'mask', 'alpha'][index % 5] + '_v' + padnum(1, 3) + '.' + fileext">
-                    <div class="example-name">Matte Elements</div>
-                    <code>name + '_' + ['matte', 'key', 'roto', 'mask', 'alpha'][index % 5] + '_v' + padnum(1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Names different matte elements for compositing</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_seq' + padnum(Math.floor(frames/24), 3) + '_frames' + padnum(frames, 5) + '.' + fileext">
-                    <div class="example-name">Sequence Length</div>
-                    <code>name + '_seq' + padnum(Math.floor(frames/24), 3) + '_frames' + padnum(frames, 5) + '.' + fileext</code>
-                    <div class="example-desc">Adds sequence length (in seconds) and total frames to filename</div>
-                  </div>
-                  <div class="example-item" data-expression="name + '_' + cond(frames > 1000, 'longseq', cond(frames > 100, 'midseq', 'shortseq')) + '_v' + padnum(index + 1, 3) + '.' + fileext">
-                    <div class="example-name">Sequence Length Category</div>
-                    <code>name + '_' + cond(frames > 1000, 'longseq', cond(frames > 100, 'midseq', 'shortseq')) + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
-                    <div class="example-desc">Categorizes sequences as short/mid/long based on frame count</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="example-category">
-                <h4>Video Operations</h4>
-                <div class="example-items">
-                  <div class="example-item" data-expression="cond(isVideo, name + '_' + formatTime(duration), name) + '.' + fileext">
-                    <div class="example-name">Add Video Duration</div>
-                    <code>cond(isVideo, name + '_' + formatTime(duration), name) + '.' + fileext</code>
-                    <div class="example-desc">Adds formatted duration (HH:MM:SS) to video filenames</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isVideo, name + '_frames' + frames, name) + '.' + fileext">
-                    <div class="example-name">Add Frame Count</div>
-                    <code>cond(isVideo, name + '_frames' + frames, name) + '.' + fileext</code>
-                    <div class="example-desc">Adds total frame count to video filenames</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isVideo, name + '_' + formatTime(duration) + '_' + padnum(frames, 5), name) + '.' + fileext">
-                    <div class="example-name">Duration and Frames</div>
-                    <code>cond(isVideo, name + '_' + formatTime(duration) + '_' + padnum(frames, 5), name) + '.' + fileext</code>
-                    <div class="example-desc">Adds both duration and frame count to video filenames</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isVideo, cond(duration < 60, 'SHORT_', cond(duration < 300, 'MEDIUM_', 'LONG_')), '') + name + '.' + fileext">
-                    <div class="example-name">Duration Category Prefix</div>
-                    <code>cond(isVideo, cond(duration < 60, 'SHORT_', cond(duration < 300, 'MEDIUM_', 'LONG_')), '') + name + '.' + fileext</code>
-                    <div class="example-desc">Categorizes videos as SHORT/MEDIUM/LONG based on duration</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isVideo, name + '_' + width + 'x' + height, name) + '.' + fileext">
-                    <div class="example-name">Add Video Resolution</div>
-                    <code>cond(isVideo, name + '_' + width + 'x' + height, name) + '.' + fileext</code>
-                    <div class="example-desc">Adds width×height to video filenames</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isVideo, cond(width >= 3840, '4K_', cond(width >= 1920, 'HD_', 'SD_')), '') + name + '.' + fileext">
-                    <div class="example-name">Video Quality Prefix</div>
-                    <code>cond(isVideo, cond(width >= 3840, '4K_', cond(width >= 1920, 'HD_', 'SD_')), '') + name + '.' + fileext</code>
-                    <div class="example-desc">Adds quality prefix (4K/HD/SD) based on resolution</div>
-                  </div>
-                  <div class="example-item" data-expression="cond(isVideo, 'VID_' + formatTime(duration).replace(/:/g, '') + '_' + name, name) + '.' + fileext">
-                    <div class="example-name">Video Duration Code</div>
-                    <code>cond(isVideo, 'VID_' + formatTime(duration).replace(/:/g, '') + '_' + name, name) + '.' + fileext</code>
-                    <div class="example-desc">Adds compact duration code (HHMMSS) to video filenames</div>
-                  </div>
-                </div>
-              </div>
             </div>
-            <div id="copyStatus" class="copy-status hidden">Copied to clipboard!</div>
-          </div>
+
+            <!-- Expression Examples Modal -->
+            <div id="expressionExamplesModal" class="modal-overlay hidden">
+                <div class="modal-container">
+                    <div class="modal-header">
+                        <h3>Expression Examples</h3>
+                        <button id="closeExpressionExamplesBtn" class="btn-close modal-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body examples-modal-body">
+                        <div class="examples-container">
+                            <div class="example-category">
+                                <h4>Basic Usage</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="name + '_' + padnum(index + 1, 3) + '.' + fileext">
+                                        <div class="example-name">Sequential Numbering</div>
+                                        <code class="clickable-example">name + '_' + padnum(index + 1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Adds a 3-digit sequential number to filenames</div>
+                                    </div>
+                                    <div class="example-item" data-expression="upper(name) + '.' + fileext">
+                                        <div class="example-name">Uppercase</div>
+                                        <code class="clickable-example">upper(name) + '.' + fileext</code>
+                                        <div class="example-desc">Converts filename to uppercase</div>
+                                    </div>
+                                    <div class="example-item" data-expression="lower(name) + '.' + fileext">
+                                        <div class="example-name">Lowercase</div>
+                                        <code class="clickable-example">lower(name) + '.' + fileext</code>
+                                        <div class="example-desc">Converts filename to lowercase</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="example-category">
+                                <h4>Image Operations</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="cond(isImage, name + '_' + width + 'x' + height, name) + '.' + fileext">
+                                        <div class="example-name">Add Image Dimensions</div>
+                                        <code class="clickable-example">cond(isImage, name + '_' + width + 'x' + height, name) + '.' + fileext</code>
+                                        <div class="example-desc">Adds width×height to image filenames</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isImage, cond(width > height, 'landscape_', 'portrait_'), '') + name + '.' + fileext">
+                                        <div class="example-name">Orientation Prefix</div>
+                                        <code class="clickable-example">cond(isImage, cond(width > height, 'landscape_', 'portrait_'), '') + name + '.' + fileext</code>
+                                        <div class="example-desc">Adds landscape/portrait prefix based on dimensions</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isImage && width >= 1920, 'HD_', '') + name + '.' + fileext">
+                                        <div class="example-name">HD Image Marker</div>
+                                        <code class="clickable-example">cond(isImage && width >= 1920, 'HD_', '') + name + '.' + fileext</code>
+                                        <div class="example-desc">Adds HD_ prefix to images at least 1920px wide</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="example-category">
+                                <h4>Advanced Patterns</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="'IMG_' + date + '_' + padnum(index + 1, 4) + '.' + fileext">
+                                        <div class="example-name">Date-Based Naming</div>
+                                        <code class="clickable-example">'IMG_' + date + '_' + padnum(index + 1, 4) + '.' + fileext</code>
+                                        <div class="example-desc">Creates filename with date and sequence number</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(index % 2 === 0, 'even_', 'odd_') + name + '.' + fileext">
+                                        <div class="example-name">Even/Odd Prefix</div>
+                                        <code class="clickable-example">cond(index % 2 === 0, 'even_', 'odd_') + name + '.' + fileext</code>
+                                        <div class="example-desc">Adds even_ or odd_ prefix based on file index</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + substr(date, 0, 4) + '.' + fileext">
+                                        <div class="example-name">Year Suffix</div>
+                                        <code class="clickable-example">name + '_' + substr(date, 0, 4) + '.' + fileext</code>
+                                        <div class="example-desc">Adds the year from date as a suffix</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="example-category">
+                                <h4>VFX Workflow</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext">
+                                        <div class="example-name">Shot Versioning</div>
+                                        <code class="clickable-example">'shot_' + padnum(index + 1, 4) + '_v' + padnum(1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Creates shot number with version (shot_0001_v001)</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name.split('_')[0] + '_' + name.split('_')[1] + '_' + lower(cond(isImage, 'beauty', 'comp')) + '.' + fileext">
+                                        <div class="example-name">Render Pass Naming</div>
+                                        <code class="clickable-example">name.split('_')[0] + '_' + name.split('_')[1] + '_' + lower(cond(isImage, 'beauty', 'comp')) + '.' + fileext</code>
+                                        <div class="example-desc">Adds render pass type to shot structure</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext">
+                                        <div class="example-name">Frame Range</div>
+                                        <code class="clickable-example">name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext</code>
+                                        <div class="example-desc">Adds frame range to filename (e.g. shot_fr0001-0100)</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext">
+                                        <div class="example-name">Frame Rate</div>
+                                        <code class="clickable-example">name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext</code>
+                                        <div class="example-desc">Adds estimated frame rate to filename based on frames/duration</div>
+                                    </div>
+                                    <div class="example-item" data-expression="'proj_' + name + '_' + width + 'x' + height + '_' + padnum(index + 1, 4) + '.' + fileext">
+                                        <div class="example-name">Project Asset Naming</div>
+                                        <code class="clickable-example">'proj_' + name + '_' + width + 'x' + height + '_' + padnum(index + 1, 4) + '.' + fileext</code>
+                                        <div class="example-desc">Creates project-based asset name with resolution</div>
+                                    </div>
+                                    <div class="example-item" data-expression="substr(name, 0, 3) + '_' + cond(width >= 3840, '4K', cond(width >= 1920, '2K', 'HD')) + '_v' + padnum(index + 1, 3) + '.' + fileext">
+                                        <div class="example-name">Resolution-Based Versioning</div>
+                                        <code class="clickable-example">substr(name, 0, 3) + '_' + cond(width >= 3840, '4K', cond(width >= 1920, '2K', 'HD')) + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Names files based on prefix, resolution and version</div>
+                                    </div>
+                                    <div class="example-item" data-expression="'COMP_' + name + '_' + date.replace(/-/g, '') + '_' + cond(index < 9, 'WIP0' + (index + 1), 'WIP' + (index + 1)) + '.' + fileext">
+                                        <div class="example-name">VFX Work-in-Progress</div>
+                                        <code class="clickable-example">'COMP_' + name + '_' + date.replace(/-/g, '') + '_' + cond(index < 9, 'WIP0' + (index + 1), 'WIP' + (index + 1)) + '.' + fileext</code>
+                                        <div class="example-desc">Creates WIP file naming with date stamp</div>
+                                    </div>
+                                    <div class="example-item" data-expression="'SQ' + padnum(index+1, 2) + '_' + name + '_KEY' + padnum(Math.round(frames/5), 3) + '.' + fileext">
+                                        <div class="example-name">Keyframe Markers</div>
+                                        <code class="clickable-example">'SQ' + padnum(index+1, 2) + '_' + name + '_KEY' + padnum(Math.round(frames/5), 3) + '.' + fileext</code>
+                                        <div class="example-desc">Names files to represent keyframes in animation sequence</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="example-category">
+                                <h4>2D/3D Production</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="'sc' + padnum(index + 1, 3) + '_sh' + padnum(1, 4) + '_' + name + '_v' + padnum(1, 3) + '.' + fileext">
+                                        <div class="example-name">Scene/Shot Organization</div>
+                                        <code class="clickable-example">'sc' + padnum(index + 1, 3) + '_sh' + padnum(1, 4) + '_' + name + '_v' + padnum(1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Complete scene/shot/element/version structure</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + cond(fileext === '.exr', 'multipass', 'single') + '_v' + padnum(index + 1, 3) + '.' + fileext">
+                                        <div class="example-name">EXR Pass Identifier</div>
+                                        <code class="clickable-example">name + '_' + cond(fileext === '.exr', 'multipass', 'single') + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Identifies EXR files as multipass or single layer</div>
+                                    </div>
+                                    <div class="example-item" data-expression="'ae_' + name + '_' + date.replace(/-/g, '') + '_r' + padnum(index + 1, 2) + '.' + fileext">
+                                        <div class="example-name">After Effects Project</div>
+                                        <code class="clickable-example">'ae_' + name + '_' + date.replace(/-/g, '') + '_r' + padnum(index + 1, 2) + '.' + fileext</code>
+                                        <div class="example-desc">After Effects project naming with date and revision</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name.replace(/\s+/g, '_') + '_' + cond(fileext.toLowerCase() === '.blend', '3d', '2d') + '_asset_v' + padnum(index + 1, 3) + '.' + fileext">
+                                        <div class="example-name">2D/3D Asset Naming</div>
+                                        <code class="clickable-example">name.replace(/\s+/g, '_') + '_' + cond(fileext.toLowerCase() === '.blend', '3d', '2d') + '_asset_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Categorizes assets as 2D or 3D based on extension</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + cond(width/height > 2, 'pano', cond(width/height < 1, 'vert', 'std')) + '.' + fileext">
+                                        <div class="example-name">Panoramic/Vertical Identifier</div>
+                                        <code class="clickable-example">name + '_' + cond(width/height > 2, 'pano', cond(width/height < 1, 'vert', 'std')) + '.' + fileext</code>
+                                        <div class="example-desc">Identifies panoramic, vertical or standard aspect ratios</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="example-category">
+                                <h4>Nuke/Compositing</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="'comp_' + name + '_' + ['beauty', 'diffuse', 'spec', 'shadow', 'ao'][index % 5] + '.' + fileext">
+                                        <div class="example-name">Render Passes</div>
+                                        <code class="clickable-example">'comp_' + name + '_' + ['beauty', 'diffuse', 'spec', 'shadow', 'ao'][index % 5] + '.' + fileext</code>
+                                        <div class="example-desc">Names render passes for compositing workflow</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + cond(fileext === '.nk', 'nuke_v', 'plate_v') + padnum(index + 1, 3) + '.' + fileext">
+                                        <div class="example-name">Nuke Script Versioning</div>
+                                        <code class="clickable-example">name + '_' + cond(fileext === '.nk', 'nuke_v', 'plate_v') + padnum(index + 1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Versions Nuke scripts and plates differently</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(fileext === '.dpx' || fileext === '.exr', 'plate_', 'comp_') + name + '_' + width + 'x' + height + '.' + fileext">
+                                        <div class="example-name">Plate/Comp Distinction</div>
+                                        <code class="clickable-example">cond(fileext === '.dpx' || fileext === '.exr', 'plate_', 'comp_') + name + '_' + width + 'x' + height + '.' + fileext</code>
+                                        <div class="example-desc">Differentiates between plates and comps based on extension</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + padnum(index * 10, 4) + '_' + cond(isImage, 'frame', 'anim') + '.' + fileext">
+                                        <div class="example-name">Frame Numbering</div>
+                                        <code class="clickable-example">name + '_' + padnum(index * 10, 4) + '_' + cond(isImage, 'frame', 'anim') + '.' + fileext</code>
+                                        <div class="example-desc">Creates frame numbers for image sequences</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + ['matte', 'key', 'roto', 'mask', 'alpha'][index % 5] + '_v' + padnum(1, 3) + '.' + fileext">
+                                        <div class="example-name">Matte Elements</div>
+                                        <code class="clickable-example">name + '_' + ['matte', 'key', 'roto', 'mask', 'alpha'][index % 5] + '_v' + padnum(1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Names different matte elements for compositing</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_seq' + padnum(Math.floor(frames/24), 3) + '_frames' + padnum(frames, 5) + '.' + fileext">
+                                        <div class="example-name">Sequence Length</div>
+                                        <code class="clickable-example">name + '_seq' + padnum(Math.floor(frames/24), 3) + '_frames' + padnum(frames, 5) + '.' + fileext</code>
+                                        <div class="example-desc">Adds sequence length (in seconds) and total frames to filename</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_' + cond(frames > 1000, 'longseq', cond(frames > 100, 'midseq', 'shortseq')) + '_v' + padnum(index + 1, 3) + '.' + fileext">
+                                        <div class="example-name">Sequence Length Category</div>
+                                        <code class="clickable-example">name + '_' + cond(frames > 1000, 'longseq', cond(frames > 100, 'midseq', 'shortseq')) + '_v' + padnum(index + 1, 3) + '.' + fileext</code>
+                                        <div class="example-desc">Categorizes sequences as short/mid/long based on frame count</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="example-category">
+                                <h4>Video Operations</h4>
+                                <div class="example-items">
+                                    <div class="example-item" data-expression="cond(isVideo, name + '_' + formatTime(duration), name) + '.' + fileext">
+                                        <div class="example-name">Add Video Duration</div>
+                                        <code class="clickable-example">cond(isVideo, name + '_' + formatTime(duration), name) + '.' + fileext</code>
+                                        <div class="example-desc">Adds formatted duration (HH:MM:SS) to video filenames</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isVideo, name + '_frames' + frames, name) + '.' + fileext">
+                                        <div class="example-name">Add Frame Count</div>
+                                        <code class="clickable-example">cond(isVideo, name + '_frames' + frames, name) + '.' + fileext</code>
+                                        <div class="example-desc">Adds total frame count to video filenames</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isVideo, name + '_' + formatTime(duration) + '_' + padnum(frames, 5), name) + '.' + fileext">
+                                        <div class="example-name">Duration and Frames</div>
+                                        <code class="clickable-example">cond(isVideo, name + '_' + formatTime(duration) + '_' + padnum(frames, 5), name) + '.' + fileext</code>
+                                        <div class="example-desc">Adds both duration and frame count to video filenames</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isVideo, cond(duration < 60, 'SHORT_', cond(duration < 300, 'MEDIUM_', 'LONG_')), '') + name + '.' + fileext">
+                                        <div class="example-name">Duration Category Prefix</div>
+                                        <code class="clickable-example">cond(isVideo, cond(duration < 60, 'SHORT_', cond(duration < 300, 'MEDIUM_', 'LONG_')), '') + name + '.' + fileext</code>
+                                        <div class="example-desc">Categorizes videos as SHORT/MEDIUM/LONG based on duration</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isVideo, name + '_' + width + 'x' + height, name) + '.' + fileext">
+                                        <div class="example-name">Add Video Resolution</div>
+                                        <code class="clickable-example">cond(isVideo, name + '_' + width + 'x' + height, name) + '.' + fileext</code>
+                                        <div class="example-desc">Adds width×height to video filenames</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isVideo, cond(width >= 3840, '4K_', cond(width >= 1920, 'HD_', 'SD_')), '') + name + '.' + fileext">
+                                        <div class="example-name">Video Quality Prefix</div>
+                                        <code class="clickable-example">cond(isVideo, cond(width >= 3840, '4K_', cond(width >= 1920, 'HD_', 'SD_')), '') + name + '.' + fileext</code>
+                                        <div class="example-desc">Adds quality prefix (4K/HD/SD) based on resolution</div>
+                                    </div>
+                                    <div class="example-item" data-expression="cond(isVideo, 'VID_' + formatTime(duration).replace(/:/g, '') + '_' + name, name) + '.' + fileext">
+                                        <div class="example-name">Video Duration Code</div>
+                                        <code class="clickable-example">cond(isVideo, 'VID_' + formatTime(duration).replace(/:/g, '') + '_' + name, name) + '.' + fileext</code>
+                                        <div class="example-desc">Adds compact duration code (HHMMSS) to video filenames</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="copyStatus" class="copy-status hidden">Copied to clipboard!</div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-  
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="modal-overlay hidden">
-    <div class="modal-container">
-      <div class="modal-header">
-        <h3>Settings</h3>
-        <button id="closeSettingsModalBtn" class="btn-close modal-close-btn">&times;</button>
-      </div>
-      <div class="settings-tabs">
-        <div class="settings-tab active" data-tab="general">General</div>
-        <div class="settings-tab" data-tab="account">Account</div>
-        <div class="settings-tab" data-tab="files">Files</div>
-        <div class="settings-tab" data-tab="about">About</div>
-      </div>
-      <div class="modal-body">
-        <!-- General Tab -->
-        <div class="settings-content active" id="general-settings">
-          <div class="settings-group">
-            <h4>Application Settings</h4>
-            <div class="settings-item">
-              <label for="darkModeToggle">Dark Mode</label>
-              <div class="toggle-switch">
-                <input type="checkbox" id="darkModeToggle">
-                <span class="toggle-slider"></span>
-              </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button id="closeSettingsModalBtn" class="btn-close modal-close-btn">&times;</button>
             </div>
-            <div class="settings-item">
-              <label for="languageSelect">Language</label>
-              <select id="languageSelect">
+            <div class="settings-tabs">
+                <div class="settings-tab active" data-tab="general">General</div>
+                <div class="settings-tab" data-tab="account">Account</div>
+                <div class="settings-tab" data-tab="files">Files</div>
+                <div class="settings-tab" data-tab="about">About</div>
+            </div>
+            <div class="modal-body">
+                <!-- General Tab -->
+                <div class="settings-content active" id="general-settings">
+                    <div class="settings-group">
+                        <h4>Application Settings</h4>
+                        <div class="settings-item">
+                            <label for="darkModeToggle">Dark Mode</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="darkModeToggle">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label for="languageSelect">Language</label>
+                            <select id="languageSelect">
                 <option value="en">English</option>
                 <option value="ko">한국어</option>
                 <option value="ja">日本語</option>
                 <option value="zh">中文</option>
               </select>
-            </div>
-            <div class="settings-item">
-              <label for="autoSaveToggle">Auto-save Settings</label>
-              <div class="toggle-switch">
-                <input type="checkbox" id="autoSaveToggle" checked>
-                <span class="toggle-slider"></span>
-              </div>
-            </div>
-          </div>
-        </div>
+                        </div>
+                        <div class="settings-item">
+                            <label for="autoSaveToggle">Auto-save Settings</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="autoSaveToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Account Tab -->
-        <div class="settings-content" id="account-settings">
-          <div class="settings-group">
-            <h4>Account Information</h4>
-            <div class="account-profile">
-              <div class="account-header">
-                <div class="profile-avatar-container">
-                  <img src="assets/default-avatar.png" alt="Profile Picture" id="profilePicture" class="profile-avatar">
-                  <button class="profile-avatar-edit" id="changeAvatarBtn">
+                <!-- Account Tab -->
+                <div class="settings-content" id="account-settings">
+                    <div class="settings-group">
+                        <h4>Account Information</h4>
+                        <div class="account-profile">
+                            <div class="account-header">
+                                <div class="profile-avatar-container">
+                                    <div id="profilePicture" class="profile-avatar"></div>
+                                    <button class="profile-avatar-edit" id="changeAvatarBtn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                   </button>
-                </div>
-                <div class="profile-info">
-                  <h3 class="account-title">User Profile</h3>
-                  <p class="account-subtitle">Manage your account information</p>
-                </div>
-              </div>
-              
-              <div class="account-info">
-                <div class="account-field">
-                  <label for="userDisplayName">Display Name</label>
-                  <input type="text" id="userDisplayName" placeholder="Your Name">
-                </div>
-                <div class="account-field">
-                  <label for="userEmail">Email</label>
-                  <input type="email" id="userEmail" placeholder="your@email.com">
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="settings-group">
-            <h4>Connect with HYPER Account</h4>
-            <div class="hyper-connect">
-              <div class="hyper-connect-info">
-                <h5>Boost Your Experience</h5>
-                <p>Connect with HYPER to sync settings across devices and access premium features.</p>
-              </div>
-              <a href="https://hyper.bz" id="connectHyperBtn" class="btn-primary" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">Connect with HYPER</a>
-            </div>
-          </div>
-          
-          <div class="account-actions">
-            <button id="saveAccountBtn" class="btn-primary btn-small">Save Changes</button>
-            <button id="signOutBtn" class="btn-outline btn-small">Sign Out</button>
-          </div>
-        </div>
+                                </div>
+                                <div class="profile-info">
+                                    <h3 class="account-title">User Profile</h3>
+                                    <p class="account-subtitle">Manage your account information</p>
+                                </div>
+                            </div>
 
-        <!-- Files Tab -->
-        <div class="settings-content" id="files-settings">
-          <div class="settings-group">
-            <h4>File Operations</h4>
-            <div class="settings-item">
-              <label for="confirmRenameToggle">Confirm before renaming</label>
-              <div class="toggle-switch">
-                <input type="checkbox" id="confirmRenameToggle" checked>
-                <span class="toggle-slider"></span>
-              </div>
-            </div>
-            <div class="settings-item">
-              <label for="backupOriginalToggle">Backup original filenames</label>
-              <div class="toggle-switch">
-                <input type="checkbox" id="backupOriginalToggle">
-                <span class="toggle-slider"></span>
-              </div>
-            </div>
-            <div class="settings-item">
-              <label for="defaultFolderPath">Default Save Location</label>
-              <div class="path-input-group">
-                <input type="text" id="defaultFolderPath" placeholder="Select default folder" readonly>
-                <button id="browseFolderBtn" class="btn-outline btn-small">Browse</button>
-              </div>
-            </div>
-          </div>
-          
-          <div class="settings-group">
-            <h4>File Handling</h4>
-            <div class="settings-item">
-              <label for="maxFileLimit">Maximum Files (0 = unlimited)</label>
-              <input type="number" id="maxFileLimit" min="0" max="1000" value="100">
-            </div>
-            <div class="settings-item">
-              <label for="thumbnailQualitySelect">Thumbnail Quality</label>
-              <select id="thumbnailQualitySelect">
+                            <div class="account-info">
+                                <div class="account-field">
+                                    <label for="userDisplayName">Display Name</label>
+                                    <input type="text" id="userDisplayName" placeholder="Your Name">
+                                </div>
+                                <div class="account-field">
+                                    <label for="userEmail">Email</label>
+                                    <input type="email" id="userEmail" placeholder="your@email.com">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4>Connect with HYPER Account</h4>
+                        <div class="hyper-connect">
+                            <div class="hyper-connect-info">
+                                <h5>Boost Your Experience</h5>
+                                <p>Connect with HYPER to sync settings across devices and access premium features.</p>
+                            </div>
+                            <a href="https://hyper.bz" id="connectHyperBtn" class="btn-primary" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">Connect with HYPER</a>
+                        </div>
+                    </div>
+
+                    <div class="account-actions">
+                        <button id="saveAccountBtn" class="btn-primary btn-small">Save Changes</button>
+                        <button id="signOutBtn" class="btn-outline btn-small">Sign Out</button>
+                    </div>
+                </div>
+
+                <!-- Files Tab -->
+                <div class="settings-content" id="files-settings">
+                    <div class="settings-group">
+                        <h4>File Operations</h4>
+                        <div class="settings-item">
+                            <label for="confirmRenameToggle">Confirm before renaming</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="confirmRenameToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label for="backupOriginalToggle">Backup original filenames</label>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="backupOriginalToggle">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </div>
+                        <div class="settings-item">
+                            <label for="defaultFolderPath">Default Save Location</label>
+                            <div class="path-input-group">
+                                <input type="text" id="defaultFolderPath" placeholder="Select default folder" readonly>
+                                <button id="browseFolderBtn" class="btn-outline btn-small">Browse</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4>File Handling</h4>
+                        <div class="settings-item">
+                            <label for="maxFileLimit">Maximum Files (0 = unlimited)</label>
+                            <input type="number" id="maxFileLimit" min="0" max="1000" value="100">
+                        </div>
+                        <div class="settings-item">
+                            <label for="thumbnailQualitySelect">Thumbnail Quality</label>
+                            <select id="thumbnailQualitySelect">
                 <option value="low">Low (faster)</option>
                 <option value="medium" selected>Medium</option>
                 <option value="high">High (slower)</option>
               </select>
-            </div>
-          </div>
-        </div>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- About Tab -->
-        <div class="settings-content" id="about-settings">
-          <div class="settings-group">
-            <h4>About</h4>
-            <div class="settings-about">
-              <p>RENAMER by HEIMLICH® Version 0.0.4</p>
-              <p>© 2025 HEIMLICH</p>
-              <div class="settings-links">
-                <a href="https://heimlich.studio" class="settings-link">Website</a>
-                <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER" class="settings-link">GitHub</a>
-              </div>
+                <!-- About Tab -->
+                <div class="settings-content" id="about-settings">
+                    <div class="settings-group">
+                        <h4>About</h4>
+                        <div class="settings-about">
+                            <p>RENAMER by HEIMLICH® Version 0.0.4</p>
+                            <p>© 2025 HEIMLICH</p>
+                            <div class="settings-links">
+                                <a href="#" id="openAboutModalBtn" class="settings-link">View Details</a>
+                                <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER" class="settings-link">GitHub</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h4>System Information</h4>
+                        <div class="system-info">
+                            <div class="info-item">
+                                <span class="info-label">OS:</span>
+                                <span class="info-value" id="systemOS">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Application Version:</span>
+                                <span class="info-value">0.0.4</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Electron:</span>
+                                <span class="info-value" id="electronVersion">-</span>
+                            </div>
+                        </div>
+
+                        <div class="update-section">
+                            <button id="checkUpdatesBtn" class="btn-outline btn-small">Check for Updates</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          
-          <div class="settings-group">
-            <h4>System Information</h4>
-            <div class="system-info">
-              <div class="info-item">
-                <span class="info-label">OS:</span>
-                <span class="info-value" id="systemOS">-</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Application Version:</span>
-                <span class="info-value">0.0.4</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">Electron:</span>
-                <span class="info-value" id="electronVersion">-</span>
-              </div>
-            </div>
-            
-            <div class="update-section">
-              <button id="checkUpdatesBtn" class="btn-outline btn-small">Check for Updates</button>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
-  
-  <script src="js/renderer.js" type="module"></script>
+
+    <!-- About 모달 추가 -->
+    <div id="aboutModal" class="modal-overlay hidden">
+        <div class="about-modal-container">
+            <button id="closeAboutModalBtn" class="about-close-btn">&times;</button>
+
+            <div class="about-header">
+                <div class="about-bg-pattern"></div>
+                <div class="about-header-content">
+                    <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="RENAMER by HEIMLICH" class="about-logo">
+                    <div class="about-version">Version 0.0.4</div>
+                    <div class="about-tagline">Advanced file renaming tool for creators</div>
+                </div>
+            </div>
+
+            <div class="about-body">
+                <div class="about-section">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg> About RENAMER
+                    </h3>
+                    <p>RENAMER is a powerful file renaming tool designed specifically for creators, VFX artists, editors, and digital professionals. With intelligent pattern-based renaming, media metadata extraction, and batch processing capabilities, RENAMER
+                        streamlines your workflow and keeps your files organized.</p>
+                </div>
+
+                <div class="about-section">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg> System Information
+                    </h3>
+                    <div class="system-info">
+                        <div class="info-item">
+                            <span class="info-label">OS:</span>
+                            <span class="info-value" id="aboutSystemOS">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Application Version:</span>
+                            <span class="info-value">0.0.4</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Electron:</span>
+                            <span class="info-value" id="aboutElectronVersion">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-links">
+                    <a href="https://heimlich.studio" class="about-link" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg> Website
+                    </a>
+                    <a href="https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER" class="about-link" target="_blank">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+              </svg> GitHub
+                    </a>
+                    <a href="#" id="checkUpdatesBtn2" class="about-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg> Check Updates
+                    </a>
+                </div>
+            </div>
+
+            <div class="about-footer">
+                <span>© 2025 HEIMLICH®</span>
+                <span>Made with ♥ in Seoul, Korea</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/renderer.js" type="module"></script>
 </body>
-</html> 
+
+</html>

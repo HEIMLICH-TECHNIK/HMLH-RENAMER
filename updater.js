@@ -379,7 +379,7 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
     type: 'info',
     title: 'Update Available',
     message: `New version ${latestVersion} is available (you have ${currentVersion})`,
-    buttons: ['Download & Install', 'Later'],
+    buttons: ['Download & Install', 'Later', 'Skip This Update'],
     defaultId: 0,
     cancelId: 1
   };
@@ -397,6 +397,10 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
       if (response === 0) {
         // 앱 내에서 업데이트 다운로드 및 설치 시작
         downloadAndInstallUpdate(matchingAsset);
+      } else if (response === 2) {
+        // 업데이트 건너뛰기 선택
+        console.log('[UPDATER] User opted to skip the update');
+        sendStatusToWindow('Update skipped. Continuing with current version.');
       }
     }).catch(err => {
       console.error('[UPDATER] Dialog error:', err);
@@ -407,7 +411,7 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
     
     // 직접 다운로드 링크가 없는 경우 릴리스 페이지로 이동
     dialogOptions.detail = `Changes:\n${releaseNotes}\n\nNo automatic installer found. Would you like to visit the download page?`;
-    dialogOptions.buttons = ['Open Download Page', 'Later'];
+    dialogOptions.buttons = ['Open Download Page', 'Later', 'Skip This Update'];
     
     dialog.showMessageBox(dialogOptions).then(({ response }) => {
       // 대화상자 종료 플래그 설정
@@ -415,6 +419,10 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
       
       if (response === 0) {
         require('electron').shell.openExternal(releaseInfo.html_url);
+      } else if (response === 2) {
+        // 업데이트 건너뛰기 선택
+        console.log('[UPDATER] User opted to skip the update');
+        sendStatusToWindow('Update skipped. Continuing with current version.');
       }
     }).catch(err => {
       console.error('[UPDATER] Dialog error:', err);
@@ -432,7 +440,13 @@ function downloadAndInstallUpdate(asset) {
     // 앱 데이터 디렉토리에 다운로드 폴더 생성
     const downloadDir = path.join(app.getPath('userData'), 'updates');
     if (!fs.existsSync(downloadDir)) {
-      fs.mkdirSync(downloadDir, { recursive: true });
+      try {
+        fs.mkdirSync(downloadDir, { recursive: true });
+      } catch (err) {
+        console.error('[UPDATER] Error creating download directory:', err);
+        sendStatusToWindow('Unable to create download directory. Update skipped.');
+        isUpdateDialogOpen = false; // 대화상자 상태 초기화
+        return; // 오류 발생 시 업데이트 건너뛰기
     }
     
     // 다운로드할 파일 경로
@@ -440,11 +454,24 @@ function downloadAndInstallUpdate(asset) {
     
     // 이전 다운로드 파일이 있으면 삭제
     if (fs.existsSync(installerPath)) {
-      fs.unlinkSync(installerPath);
+      try {
+        fs.unlinkSync(installerPath);
+      } catch (err) {
+        console.error('[UPDATER] Error removing previous installer:', err);
+        // 파일 삭제 실패해도 계속 진행 - 새 파일로 덮어쓸 시도
+      }
     }
     
     // 파일 다운로드
-    const file = fs.createWriteStream(installerPath);
+    let file;
+    try {
+      file = fs.createWriteStream(installerPath);
+    } catch (err) {
+      console.error('[UPDATER] Error creating write stream:', err);
+      sendStatusToWindow(`Could not prepare for download: ${err.message}. Update skipped.`);
+      isUpdateDialogOpen = false;
+      return; // 오류 발생 시 업데이트 건너뛰기
+    }
     
     console.log('[UPDATER] Downloading from URL:', asset.browser_download_url);
     
@@ -478,9 +505,14 @@ function downloadAndInstallUpdate(asset) {
         
         if (response.statusCode !== 200) {
           file.close();
-          fs.unlinkSync(installerPath);
-          sendStatusToWindow(`Download failed: Server returned ${response.statusCode}`);
+          try {
+            fs.unlinkSync(installerPath);
+          } catch (err) {
+            console.error('[UPDATER] Error removing failed download:', err);
+          }
+          sendStatusToWindow(`Download failed: Server returned ${response.statusCode}. Update skipped.`);
           console.error(`[UPDATER] Download failed: Server returned ${response.statusCode}`);
+          isUpdateDialogOpen = false;
           return;
         }
         
@@ -488,44 +520,93 @@ function downloadAndInstallUpdate(asset) {
         let downloadedSize = 0;
         
         response.on('data', (chunk) => {
-          file.write(chunk);
-          downloadedSize += chunk.length;
-          
-          // 진행률 계산 및 표시
-          if (totalSize) {
-            const percent = (downloadedSize / totalSize) * 100;
-            sendDownloadProgress(percent);
+          try {
+            file.write(chunk);
+            downloadedSize += chunk.length;
+            
+            // 진행률 계산 및 표시
+            if (totalSize) {
+              const percent = (downloadedSize / totalSize) * 100;
+              sendDownloadProgress(percent);
+            }
+          } catch (err) {
+            console.error('[UPDATER] Error writing download chunk:', err);
+            // 에러가 발생해도 다운로드 계속 시도
           }
         });
         
         response.on('end', () => {
-          file.end();
-          sendStatusToWindow('Download complete. Preparing to install...');
-          console.log('[UPDATER] Download complete:', installerPath);
-          
-          // 다운로드 완료 후 확인 대화상자 표시
-          dialog.showMessageBox({
-            type: 'info',
-            title: 'Ready to Install',
-            message: 'Update downloaded successfully',
-            detail: 'The application will close and the update will be installed.',
-            buttons: ['Install Now', 'Later'],
-            defaultId: 0,
-            cancelId: 1
-          }).then(({ response }) => {
-            if (response === 0) {
-              // 업데이트 설치 실행
-              installUpdate(installerPath);
-            } else {
-              sendStatusToWindow('Update installation postponed. Will install on next restart.');
-            }
-          });
+          try {
+            file.end();
+            sendStatusToWindow('Download complete. Preparing to install...');
+            console.log('[UPDATER] Download complete:', installerPath);
+            
+            // 다운로드 완료 후 확인 대화상자 표시
+            dialog.showMessageBox({
+              type: 'info',
+              title: 'Ready to Install',
+              message: 'Update downloaded successfully',
+              detail: 'The application will close and the update will be installed.',
+              buttons: ['Install Now', 'Later', 'Skip Update'],
+              defaultId: 0,
+              cancelId: 2
+            }).then(({ response }) => {
+              if (response === 0) {
+                // 업데이트 설치 시도
+                try {
+                  installUpdate(installerPath);
+                } catch (err) {
+                  console.error('[UPDATER] Install error:', err);
+                  dialog.showMessageBox({
+                    type: 'error',
+                    title: 'Installation Failed',
+                    message: 'Failed to install update',
+                    detail: `Error: ${err.message}\n\nYou can continue using the current version.`,
+                    buttons: ['OK'],
+                    defaultId: 0
+                  });
+                  isUpdateDialogOpen = false;
+                }
+              } else if (response === 1) {
+                sendStatusToWindow('Update installation postponed. Will install on next restart.');
+                isUpdateDialogOpen = false;
+              } else {
+                sendStatusToWindow('Update skipped. Continuing with current version.');
+                isUpdateDialogOpen = false;
+                try {
+                  fs.unlinkSync(installerPath); // 다운로드한 파일 삭제
+                } catch (err) {
+                  console.error('[UPDATER] Error removing skipped update:', err);
+                }
+              }
+            }).catch(err => {
+              console.error('[UPDATER] Dialog error:', err);
+              isUpdateDialogOpen = false;
+            });
+          } catch (err) {
+            console.error('[UPDATER] Error finishing download:', err);
+            sendStatusToWindow(`Download could not be completed. Update skipped.`);
+            isUpdateDialogOpen = false;
+          }
         });
       }).on('error', (err) => {
-        file.close();
-        fs.unlinkSync(installerPath);
-        sendStatusToWindow(`Download failed: ${err.message}`);
         console.error('[UPDATER] Download error:', err);
+        try {
+          file.close();
+        } catch (closeErr) {
+          console.error('[UPDATER] Error closing file:', closeErr);
+        }
+        
+        try {
+          if (fs.existsSync(installerPath)) {
+            fs.unlinkSync(installerPath);
+          }
+        } catch (unlinkErr) {
+          console.error('[UPDATER] Error removing file after download error:', unlinkErr);
+        }
+        
+        sendStatusToWindow(`Download failed: ${err.message}. Update skipped.`);
+        isUpdateDialogOpen = false;
       });
     };
     
@@ -533,7 +614,8 @@ function downloadAndInstallUpdate(asset) {
     downloadWithRedirects(asset.browser_download_url);
   } catch (error) {
     console.error('[UPDATER] Error in download process:', error);
-    sendStatusToWindow(`Update download failed: ${error.message}`);
+    sendStatusToWindow(`Update download failed: ${error.message}. Continuing with current version.`);
+    isUpdateDialogOpen = false;
   }
 }
 
@@ -683,8 +765,12 @@ exports.checkForUpdatesOnStartup = () => {
         // 현재 앱 버전 확인
         const currentVersion = app.getVersion();
         
-        // GitHub API를 통해 직접 확인
+        // GitHub API를 통해 직접 확인 시도
         checkLatestReleaseFromGitHub(currentVersion)
+          .catch(error => {
+            // 오류 발생 시 로그 기록 후 계속 진행
+            console.error('[UPDATER] Error during startup update check:', error);
+          })
           .finally(() => {
             isCheckingForUpdates = false;
           });

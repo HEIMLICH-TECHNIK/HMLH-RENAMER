@@ -1074,7 +1074,7 @@ function updateAfterWordSelection() {
 }
 
 /**
- * 앱 초기화
+ * 애플리케이션 초기화
  */
 function initializeApp() {
     // 상태 초기화
@@ -1612,122 +1612,12 @@ function initializeApp() {
         });
     }
 
-    // 업데이트 확인 이벤트
-    const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
-    if (checkUpdatesBtn) {
-        checkUpdatesBtn.addEventListener('click', () => {
-            // 업데이트 확인 기능 (향후 구현)
-            console.log('Checking for updates...');
+    // 업데이트 기능 초기화
+    initializeUpdater();
 
-            // 임시 토스트 메시지
-            setTimeout(() => {
-                showToast('You are using the latest version', 'success');
-            }, 1000);
-        });
-    }
-
-    // 설정 모달 닫기 버튼 이벤트
-    if (closeSettingsModalBtn) {
-        closeSettingsModalBtn.addEventListener('click', () => {
-            if (settingsModal) {
-                hideModal(settingsModal);
-            }
-        });
-    }
-
-    // 설정 모달 외부 클릭 시 닫기
-    if (settingsModal) {
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) {
-                hideModal(settingsModal);
-            }
-        });
-    }
-
-    // About 모달 관련 이벤트 핸들러
-    document.addEventListener('DOMContentLoaded', function() {
-        // About 모달 관련 요소
-        const aboutModal = document.getElementById('aboutModal');
-        const openAboutModalBtn = document.getElementById('openAboutModalBtn');
-        const closeAboutModalBtn = document.getElementById('closeAboutModalBtn');
-        const checkUpdatesBtn2 = document.getElementById('checkUpdatesBtn2');
-        const versionInfoBtn = document.getElementById('versionInfoBtn');
-
-        // About 모달에 사용할 시스템 정보 요소
-        const aboutSystemOS = document.getElementById('aboutSystemOS');
-        const aboutElectronVersion = document.getElementById('aboutElectronVersion');
-
-        // 버전 정보 버튼 이벤트 리스너 추가
-        if (versionInfoBtn && aboutModal) {
-            versionInfoBtn.addEventListener('click', () => {
-                showModal(aboutModal);
-
-                // 시스템 정보 업데이트
-                if (window.electron && window.electron.getSystemInfo) {
-                    window.electron.getSystemInfo().then(info => {
-                        if (aboutSystemOS) aboutSystemOS.textContent = info.os || 'Unknown';
-                        if (aboutElectronVersion) aboutElectronVersion.textContent = info.electronVersion || 'Unknown';
-                    }).catch(err => {
-                        console.error('Failed to get system info for About modal:', err);
-                    });
-                }
-            });
-        }
-
-        // About 모달 열기 버튼 이벤트
-        if (openAboutModalBtn && aboutModal) {
-            openAboutModalBtn.addEventListener('click', () => {
-                // 설정 모달 닫기
-                if (settingsModal) {
-                    hideModal(settingsModal);
-                }
-
-                // 약간의 딜레이 후 About 모달 열기
-                setTimeout(() => {
-                    showModal(aboutModal);
-
-                    // 시스템 정보 업데이트
-                    if (window.electron && window.electron.getSystemInfo) {
-                        window.electron.getSystemInfo().then(info => {
-                            if (aboutSystemOS) aboutSystemOS.textContent = info.os || 'Unknown';
-                            if (aboutElectronVersion) aboutElectronVersion.textContent = info.electronVersion || 'Unknown';
-                        }).catch(err => {
-                            console.error('Failed to get system info for About modal:', err);
-                        });
-                    }
-                }, 300); // 설정 모달 닫힘 애니메이션 시간을 고려한 딜레이
-            });
-        }
-
-        // About 모달 닫기 버튼 이벤트
-        if (closeAboutModalBtn && aboutModal) {
-            closeAboutModalBtn.addEventListener('click', () => {
-                hideModal(aboutModal);
-            });
-        }
-
-        // About 모달 외부 클릭 시 닫기
-        if (aboutModal) {
-            aboutModal.addEventListener('click', (e) => {
-                if (e.target === aboutModal) {
-                    hideModal(aboutModal);
-                }
-            });
-        }
-
-        // About 모달의 업데이트 확인 버튼 이벤트
-        if (checkUpdatesBtn2) {
-            checkUpdatesBtn2.addEventListener('click', () => {
-                console.log('Checking for updates from About modal...');
-
-                // 임시 토스트 메시지
-                setTimeout(() => {
-                    showToast('You are using the latest version', 'success');
-                }, 1000);
-            });
-        }
-    });
-
+    // 버전 표시 및 업데이트 기능 초기화
+    initializeUpdater();
+    
     // 다른 모달 관련 코드도 showModal/hideModal 함수를 사용하도록 업데이트
     const closeRulesModalBtn = document.getElementById('closeRulesModalBtn');
     if (closeRulesModalBtn) {
@@ -1750,8 +1640,169 @@ function initializeApp() {
         });
     }
 
+    // 모달 초기화
+    initModals();
+
     // UI 초기화
     updateUI();
+}
+
+/**
+ * 업데이트 기능 초기화
+ */
+function initializeUpdater() {
+    console.log('Initializing updater...');
+    
+    // 앱 버전을 동기적으로 가져와서 바로 표시
+    const version = window.api.getAppVersion().then(version => {
+        console.log(`Current app version: ${version}`);
+        
+        // 모든 버전 표시 엘리먼트에 버전 설정
+        const versionElements = [
+            document.getElementById('versionInfoBtn'),
+            document.getElementById('appVersionDisplay'),
+            document.getElementById('currentVersionDisplay'),
+            document.getElementById('aboutAppVersionDisplay')
+        ];
+        
+        versionElements.forEach(element => {
+            if (element) {
+                if (element.id === 'versionInfoBtn') {
+                    element.textContent = `v${version}`;
+                } else {
+                    element.textContent = version;
+                }
+            }
+        });
+        
+        // about 모달 버전 정보 업데이트
+        const aboutVersionElement = document.querySelector('.about-version');
+        if (aboutVersionElement) {
+            aboutVersionElement.textContent = `Version ${version}`;
+        }
+    }).catch(error => {
+        console.error('Failed to get app version:', error);
+    });
+
+    // 업데이트 버튼 이벤트 리스너 등록
+    const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
+    if (checkUpdatesBtn) {
+        console.log('Found update button:', checkUpdatesBtn);
+        checkUpdatesBtn.addEventListener('click', () => {
+            console.log('Update button clicked');
+            checkForUpdates();
+        });
+    }
+    
+    const checkUpdatesBtn2 = document.getElementById('checkUpdatesBtn2');
+    if (checkUpdatesBtn2) {
+        console.log('Found second update button:', checkUpdatesBtn2);
+        checkUpdatesBtn2.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Second update button clicked');
+            checkForUpdates();
+        });
+    }
+
+    // 업데이트 상태 리스너 등록
+    window.api.onUpdateStatus((message) => {
+        console.log('Update status received:', message);
+        updateStatusDisplay(message);
+    });
+    
+    // 업데이트 버전 정보 리스너 등록
+    window.api.onUpdateVersions((data) => {
+        console.log('Update versions received:', data);
+        updateVersionsDisplay(data.currentVersion, data.latestVersion);
+    });
+}
+
+/**
+ * 수동으로 업데이트 확인
+ */
+function checkForUpdates() {
+    try {
+        // 업데이트 상태 메시지 표시
+        updateStatusDisplay('Checking for updates...');
+        
+        // 업데이트 확인 API 호출 (동기적)
+        const result = window.api.checkForUpdates();
+        console.log('Update check result:', result);
+        
+        if (result.success) {
+            updateStatusDisplay(result.message, 'info');
+        } else {
+            updateStatusDisplay(result.message, 'warning');
+        }
+    } catch (error) {
+        console.error('Failed to check for updates:', error);
+        updateStatusDisplay(`Update check failed: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * 업데이트 상태 표시 업데이트
+ * @param {string} message - 표시할 메시지
+ * @param {string} type - 메시지 타입 (info, success, warning, error)
+ */
+function updateStatusDisplay(message, type = '') {
+    // 모든 업데이트 상태 엘리먼트에 메시지 표시
+    const statusElements = [
+        document.getElementById('updateStatus'),
+        document.getElementById('aboutUpdateStatus')
+    ];
+    
+    statusElements.forEach(element => {
+        if (element) {
+            element.textContent = message;
+            
+            // 기존 클래스 제거
+            element.classList.remove('info', 'success', 'warning', 'error');
+            
+            // 타입이 지정된 경우 클래스 추가
+            if (type) {
+                element.classList.add(type);
+            }
+            
+            // 메시지가 없으면 감추기
+            element.style.display = message ? 'block' : 'none';
+        }
+    });
+}
+
+/**
+ * 버전 정보 표시 업데이트
+ * @param {string} currentVersion - 현재 버전
+ * @param {string} latestVersion - 최신 버전
+ */
+function updateVersionsDisplay(currentVersion, latestVersion) {
+    const latestVersionElements = [
+        document.getElementById('latestVersionDisplay'),
+        document.getElementById('aboutLatestVersionDisplay')
+    ];
+    
+    latestVersionElements.forEach(element => {
+        if (element) {
+            element.textContent = latestVersion || 'Unknown';
+        }
+    });
+    
+    // 현재 버전과 최신 버전이 다를 경우 시각적으로 표시
+    if (currentVersion && latestVersion && currentVersion !== latestVersion) {
+        latestVersionElements.forEach(element => {
+            if (element) {
+                element.classList.add('update-available');
+                element.title = 'New version available!';
+            }
+        });
+    } else {
+        latestVersionElements.forEach(element => {
+            if (element) {
+                element.classList.remove('update-available');
+                element.title = '';
+            }
+        });
+    }
 }
 
 /**
@@ -1874,6 +1925,56 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // About 모달 이벤트 리스너 추가
+    const aboutModal = document.getElementById('aboutModal');
+    const openAboutModalBtn = document.getElementById('openAboutModalBtn');
+    const closeAboutModalBtn = document.getElementById('closeAboutModalBtn');
+    const versionInfoBtn = document.getElementById('versionInfoBtn');
+    
+    if (openAboutModalBtn) {
+        console.log('Found About modal button:', openAboutModalBtn);
+        openAboutModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('About modal button clicked!');
+            if (aboutModal) aboutModal.classList.remove('hidden');
+        });
+    }
+    
+    if (versionInfoBtn) {
+        console.log('Found version info button:', versionInfoBtn);
+        versionInfoBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Version info button clicked!');
+            if (aboutModal) aboutModal.classList.remove('hidden');
+        });
+    }
+    
+    if (closeAboutModalBtn) {
+        closeAboutModalBtn.addEventListener('click', function() {
+            if (aboutModal) aboutModal.classList.add('hidden');
+        });
+    }
+    
+    // 업데이트 버튼 이벤트 리스너 등록
+    const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
+    if (checkUpdatesBtn) {
+        console.log('Found update button:', checkUpdatesBtn);
+        checkUpdatesBtn.addEventListener('click', function() {
+            console.log('Update button clicked');
+            checkForUpdates();
+        });
+    }
+    
+    const checkUpdatesBtn2 = document.getElementById('checkUpdatesBtn2');
+    if (checkUpdatesBtn2) {
+        console.log('Found second update button:', checkUpdatesBtn2);
+        checkUpdatesBtn2.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Second update button clicked');
+            checkForUpdates();
+        });
+    }
 });
 
 // 커서 위치에 텍스트 삽입하는 도우미 함수
@@ -1900,29 +2001,46 @@ function insertAtCursor(field, text) {
 
 // 모달 표시 함수 - 애니메이션과 함께 모달을 표시합니다
 function showModal(modalElement) {
-    if (!modalElement) return;
-
-    // 모달에 표시 전 준비 클래스 추가 (트랜지션을 위해)
-    modalElement.classList.add('preparing-modal');
-
-    // 레이아웃 리플로우를 강제하기 위한 트릭
-    void modalElement.offsetWidth;
-
-    // hidden 클래스 제거 및 준비 클래스 제거
-    modalElement.classList.remove('hidden');
-
-    // 약간의 지연 후 준비 클래스 제거
-    setTimeout(() => {
-        modalElement.classList.remove('preparing-modal');
-    }, 10);
+    if (modalElement) {
+        modalElement.classList.remove('hidden');
+    }
 }
 
 // 모달 숨김 함수 - 애니메이션과 함께 모달을 숨깁니다
 function hideModal(modalElement) {
-    if (!modalElement) return;
+    if (modalElement) {
+        modalElement.classList.add('hidden');
+    }
+}
 
-    // hidden 클래스 추가
-    modalElement.classList.add('hidden');
+// 모달 초기화 함수
+function initModals() {
+    console.log('Initializing modals');
+    
+    // About 모달
+    const aboutModal = document.getElementById('aboutModal');
+    const openAboutModalBtn = document.getElementById('openAboutModalBtn');
+    const closeAboutModalBtn = document.getElementById('closeAboutModalBtn');
+    
+    if (openAboutModalBtn) {
+        openAboutModalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Open About modal button clicked');
+            showModal(aboutModal);
+        });
+    } else {
+        console.error('openAboutModalBtn not found');
+    }
+    
+    if (closeAboutModalBtn) {
+        closeAboutModalBtn.addEventListener('click', () => {
+            hideModal(aboutModal);
+        });
+    } else {
+        console.error('closeAboutModalBtn not found');
+    }
+    
+    // 기타 모달들...
 }
 
 // 앱 초기화

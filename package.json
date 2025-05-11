@@ -1,13 +1,14 @@
 {
   "name": "hmlh-renamer",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Advanced file renaming tool for creators by HEIMLICH®",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "electron-builder install-app-deps && electron-rebuild -f -w sharp ffprobe"
+    "postinstall": "electron-builder install-app-deps",
+    "release": "electron-builder --publish always"
   },
   "author": "HEIMLICH",
   "license": "MIT",
@@ -20,14 +21,20 @@
     "sharp": "^0.33.2",
     "fluent-ffmpeg": "^2.1.2",
     "@ffprobe-installer/ffprobe": "^2.1.2",
-    "ffprobe": "^2.0.2",
     "image-size": "^1.1.1",
-    "probe-image-size": "^7.2.3"
+    "probe-image-size": "^7.2.3",
+    "electron-updater": "^6.1.7",
+    "electron-log": "^5.0.3"
   },
   "build": {
     "appId": "studio.heimlich.renamer",
     "productName": "RENAMER by HEIMLICH®",
     "copyright": "Copyright © 2025 HEIMLICH",
+    "asarUnpack": [
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/@ffprobe-installer/**/*"
+    ],
     "mac": {
       "category": "public.app-category.utilities",
       "icon": "assets/icons/app-icon.icns",
@@ -73,7 +80,14 @@
       "!node_modules/.bin",
       "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
       "!**/node_modules/*/{.editorconfig,.eslintrc.json,.eslintrc,.eslintignore,.gitattributes,.github,.npmignore,.travis.yml,.yarn-integrity,.yarnclean,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log}"
-    ]
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "HEIMLICH-STUDIO",
+      "repo": "HMLH-RENAMER",
+      "releaseType": "release",
+      "publishAutoUpdate": true
+    }
   },
   "keywords": [
     "file",

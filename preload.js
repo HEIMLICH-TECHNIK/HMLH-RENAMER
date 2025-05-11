@@ -10,7 +10,11 @@ contextBridge.exposeInMainWorld(
     saveRule: (ruleName, ruleData) => ipcRenderer.invoke('save-rule', ruleName, ruleData),
     getSavedRules: () => ipcRenderer.invoke('get-saved-rules'),
     loadRule: (ruleName) => ipcRenderer.invoke('load-rule', ruleName),
-    deleteRule: (ruleName) => ipcRenderer.invoke('delete-rule', ruleName)
+    deleteRule: (ruleName) => ipcRenderer.invoke('delete-rule', ruleName),
+    checkForUpdates: () => ipcRenderer.sendSync('check-for-updates'),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+    onUpdateStatus: (callback) => ipcRenderer.on('update-status', (_, text) => callback(text)),
+    onUpdateVersions: (callback) => ipcRenderer.on('update-versions', (_, data) => callback(data))
   }
 );
 

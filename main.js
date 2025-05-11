@@ -1,12 +1,122 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { imageSizeFromFile } = require('image-size/fromFile');
+const imageSize = require('image-size');
 const probeImageSize = require('probe-image-size');
-const sharp = require('sharp');
+
+// Try to load sharp, but don't crash if it's not available
+let sharp;
+try {
+  sharp = require('sharp');
+  console.log('Sharp module loaded successfully');
+} catch (error) {
+  console.warn('Could not load sharp module, some image processing features will be limited', error);
+  // Create dummy sharp module to prevent errors
+  sharp = {
+    metadata: () => Promise.resolve({ width: 0, height: 0 })
+  };
+}
+
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
-const ffprobe = require('ffprobe');
+
+// Set ffprobe path for ffmpeg
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
+
+// Try to load electron-updater, but don't crash if it's not available
+let autoUpdater;
+let electronLog;
+try {
+  const { autoUpdater: updater } = require('electron-updater');
+  electronLog = require('electron-log');
+  
+  // 로그 레벨 설정
+  electronLog.transports.file.level = 'silly';
+  electronLog.transports.console.level = 'silly';
+  
+  autoUpdater = updater;
+  
+  // 로그 설정
+  autoUpdater.logger = electronLog;
+  autoUpdater.logger.transports.file.level = 'silly';
+  
+  // 프리릴리즈 허용 설정
+  autoUpdater.allowPrerelease = true;
+  autoUpdater.allowDowngrade = true;
+  autoUpdater.autoDownload = true;
+  autoUpdater.forceDevUpdateConfig = true;
+  autoUpdater.channel = 'latest';
+  
+  // GitHub 토큰 확인 (토큰이 있는 경우에만 설정)
+  // autoUpdater.requestHeaders = { "PRIVATE-TOKEN": "YOUR_TOKEN_HERE" };
+  
+  // 업데이트 이벤트 설정
+  autoUpdater.on('checking-for-update', () => {
+    electronLog.info('Checking for update...');
+    sendStatusToWindow('Checking for update...');
+  });
+  
+  autoUpdater.on('update-available', (info) => {
+    electronLog.info('Update available!', info);
+    sendStatusToWindow('Update available!');
+    sendUpdateInfo(app.getVersion(), info.version);
+    
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: `New version ${info.version} found.`,
+      detail: 'Downloading in background. You will be notified when it is ready to install.',
+      buttons: ['OK']
+    });
+  });
+  
+  autoUpdater.on('update-not-available', (info) => {
+    electronLog.info('Update not available', info);
+    if (info && info.version) {
+      sendUpdateInfo(app.getVersion(), info.version);
+    }
+    sendStatusToWindow('You are using the latest version!');
+  });
+  
+  autoUpdater.on('error', (err) => {
+    electronLog.error('Update error:', err);
+    sendStatusToWindow(`Update error: ${err.toString()}`);
+  });
+  
+  autoUpdater.on('download-progress', (progressObj) => {
+    let logMessage = `Download speed: ${progressObj.bytesPerSecond} - Downloaded: ${progressObj.percent.toFixed(2)}% (${progressObj.transferred}/${progressObj.total})`;
+    electronLog.info(logMessage);
+    sendStatusToWindow(logMessage);
+  });
+  
+  autoUpdater.on('update-downloaded', (info) => {
+    electronLog.info('Update downloaded', info);
+    sendStatusToWindow('Update downloaded!');
+    
+    const dialogOpts = {
+      type: 'info',
+      buttons: ['Restart Now', 'Later'],
+      title: 'Update Ready',
+      message: `New version ${info.version} has been downloaded.`,
+      detail: 'The application will restart to apply the update.'
+    };
+    
+    dialog.showMessageBox(dialogOpts).then((returnValue) => {
+      if (returnValue.response === 0) autoUpdater.quitAndInstall();
+    });
+  });
+  
+  console.log('Electron updater loaded successfully');
+} catch (error) {
+  console.warn('Could not load electron-updater, auto updates will be disabled', error);
+  // Create dummy autoUpdater to prevent errors
+  autoUpdater = {
+    logger: null,
+    checkForUpdatesAndNotify: () => console.log('Update check disabled: electron-updater not available'),
+    on: () => null,
+    quitAndInstall: () => null
+  };
+}
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
@@ -50,6 +160,20 @@ if (app.isPackaged) {
 // ffmpeg에 ffprobe 경로 설정
 ffmpeg.setFfprobePath(ffprobePath);
 
+// Send update status to renderer
+function sendStatusToWindow(text) {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', text);
+  }
+}
+
+// Send current and latest version info to renderer
+function sendUpdateInfo(currentVersion, latestVersion) {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-versions', { currentVersion, latestVersion });
+  }
+}
+
 function createWindow() {
   // Create the browser window
   mainWindow = new BrowserWindow({
@@ -92,6 +216,21 @@ function createWindow() {
   // Show window when ready to prevent flickering
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    
+    // Check for updates after app is visible
+    if (app.isPackaged) {
+      // Only check for updates in production (packaged app)
+      console.log('Checking for updates on app start (production mode)');
+      setTimeout(() => {
+        try {
+          autoUpdater.checkForUpdatesAndNotify();
+        } catch (error) {
+          console.error('Error checking for updates on startup:', error);
+        }
+      }, 2000);
+    } else {
+      console.log('Update checks disabled in development mode');
+    }
   });
 
   // Open DevTools in development
@@ -277,6 +416,98 @@ ipcMain.handle('rename-files', async (event, files, config) => {
           }
           
           // Add extension if not included in pattern
+          if (fileExt && !newName.includes(fileExt)) {
+            newName += fileExt;
+          }
+          break;
+          
+        case 'numbering':
+          // 넘버링 방식 이름 변경
+          let sortedIndex = index;
+          
+          // 정렬 방식에 따라 인덱스 조정
+          if (config.sort) {
+            // 미리 정렬된 인덱스 배열을 생성하지 않고 현재 파일의 정렬 위치 계산
+            const sortedFiles = [...files];
+            
+            // 파일 이름 정렬
+            if (config.sort === 'name') {
+              sortedFiles.sort((a, b) => {
+                const nameA = path.basename(a).toLowerCase();
+                const nameB = path.basename(b).toLowerCase();
+                return config.reverse ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
+              });
+            } 
+            // 날짜 정렬
+            else if (config.sort === 'date') {
+              sortedFiles.sort((a, b) => {
+                try {
+                  const statsA = fs.statSync(a);
+                  const statsB = fs.statSync(b);
+                  return config.reverse ? 
+                    statsB.mtime.getTime() - statsA.mtime.getTime() : 
+                    statsA.mtime.getTime() - statsB.mtime.getTime();
+                } catch (error) {
+                  console.error('Error sorting by date:', error);
+                  return 0;
+                }
+              });
+            }
+            // 크기 정렬
+            else if (config.sort === 'size') {
+              sortedFiles.sort((a, b) => {
+                try {
+                  const statsA = fs.statSync(a);
+                  const statsB = fs.statSync(b);
+                  return config.reverse ? 
+                    statsB.size - statsA.size : 
+                    statsA.size - statsB.size;
+                } catch (error) {
+                  console.error('Error sorting by size:', error);
+                  return 0;
+                }
+              });
+            }
+            // 랜덤 정렬
+            else if (config.sort === 'random') {
+              // 랜덤으로 섞기 전에 인덱스를 생성하여 일관성 유지
+              const indexMap = Array.from({ length: files.length }, (_, i) => i);
+              indexMap.sort(() => Math.random() - 0.5);
+              
+              // 섞인 인덱스에 따라 파일 배열 정렬
+              sortedFiles.sort((a, b) => {
+                const indexA = files.indexOf(a);
+                const indexB = files.indexOf(b);
+                return indexMap[indexA] - indexMap[indexB];
+              });
+            }
+            
+            // 정렬된 배열에서 현재 파일의 인덱스 찾기
+            sortedIndex = sortedFiles.indexOf(filePath);
+            if (sortedIndex === -1) sortedIndex = index; // 찾지 못한 경우 원래 인덱스 사용
+          }
+          
+          // 인덱스에 해당하는 순차 번호 생성
+          const startNum = config.startNumber || 1;
+          const stepNum = config.step || 1;
+          const padCount = config.padding || 0;
+          
+          // 패턴 적용
+          const numberingPattern = config.pattern || '{name}_{num}';
+          let formattedNumber = (startNum + (sortedIndex * stepNum)).toString();
+          
+          // 패딩 적용
+          if (padCount > 0) {
+            formattedNumber = formattedNumber.padStart(padCount, '0');
+          }
+          
+          // 패턴 치환
+          newName = numberingPattern
+            .replace(/{name}/g, baseName)
+            .replace(/{num}/g, formattedNumber)
+            .replace(/{ext}/g, fileExt.replace('.', ''));
+          
+          // 확장자가 패턴에 포함되지 않았다면 추가
           if (fileExt && !newName.includes(fileExt)) {
             newName += fileExt;
           }
@@ -504,10 +735,14 @@ async function handleGetImageSize(event, filePath) {
         
         // 다음으로 sharp 시도
         try {
-          const metadata = await sharp(filePath).metadata();
-          if (metadata.width && metadata.height) {
-            console.log(`Image dimensions for ${filePath}: ${metadata.width}x${metadata.height} (using sharp)`);
-            return { width: metadata.width, height: metadata.height };
+          if (typeof sharp.metadata === 'function') {
+            const metadata = await sharp(filePath).metadata();
+            if (metadata.width && metadata.height) {
+              console.log(`Image dimensions for ${filePath}: ${metadata.width}x${metadata.height} (using sharp)`);
+              return { width: metadata.width, height: metadata.height };
+            }
+          } else {
+            console.log('Sharp module not available for metadata extraction');
           }
         } catch (sharpErr) {
           console.log('Sharp metadata failed:', sharpErr.message);
@@ -524,8 +759,8 @@ async function handleGetImageSize(event, filePath) {
 
     // 일반 이미지 포맷의 경우 imageSizeFromFile 사용
     try {
-      // 이미지 크기 가져오기 (Promise를 반환하므로 await 사용)
-      const dimensions = await imageSizeFromFile(filePath);
+      // 이미지 크기 가져오기 (동기 방식)
+      const dimensions = imageSize(filePath);
       console.log(`Image dimensions for ${filePath}: ${dimensions.width}x${dimensions.height}`);
       return { width: dimensions.width, height: dimensions.height };
     } catch (error) {
@@ -786,162 +1021,159 @@ async function extractFFProbeData(filePath) {
     
     console.log(`Processing video file: ${filePath}, file extension: ${fileExt}`);
     
-    // ffprobe 추가 옵션
-    const options = { 
-      path: ffprobePath,
-      // 더 자세한 메타데이터를 가져오도록 옵션 추가
-      probeSize: 5000000,  // 5MB 탐색
-      analyzeDuration: 2000000,  // 2초 분석
-      showStreams: true,
-      showFormat: true
-    };
-    
-    // ffprobe 모듈 직접 사용
-    const metadata = await ffprobe(filePath, options);
-    
-    // 전체 메타데이터 로깅 (디버깅용)
-    console.log('Full metadata:', JSON.stringify(metadata, null, 2));
-    
-    // 비디오 스트림 찾기
-    let videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
-    
-    if (!videoStream) {
-      console.log('No valid video stream found');
-      throw new Error('No valid video stream found');
-    }
-    
-    console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
-    
-    // 전체 비디오 스트림 정보 로깅 (디버깅용)
-    console.log('Full video stream metadata:', JSON.stringify(videoStream, null, 2));
-    
-    // 프레임 레이트 계산
-    let fps = 0;
-    if (videoStream.r_frame_rate) {
-      const [num, den] = videoStream.r_frame_rate.split('/');
-      fps = parseInt(num) / parseInt(den);
-    } else if (videoStream.avg_frame_rate) {
-      const [num, den] = videoStream.avg_frame_rate.split('/');
-      if (den !== '0') {
-        fps = parseInt(num) / parseInt(den);
-      }
-    }
-    
-    // 총 프레임 수 계산
-    let frames = 0;
-    if (fps > 0 && videoStream.duration) {
-      frames = Math.round(fps * parseFloat(videoStream.duration));
-    } else if (videoStream.nb_frames) {
-      frames = parseInt(videoStream.nb_frames);
-    } else if (metadata.format && metadata.format.duration) {
-      frames = Math.round(fps * parseFloat(metadata.format.duration));
-    }
-    
-    // 재생 시간
-    let duration = videoStream.duration || 0;
-    if (duration === 0 && metadata.format && metadata.format.duration) {
-      duration = parseFloat(metadata.format.duration);
-    }
-    
-    // 컬러스페이스 정보
-    let colorspace = 'unknown';
-    if (videoStream.color_space) {
-      colorspace = videoStream.color_space;
-    } else if (videoStream.colorspace) {
-      colorspace = videoStream.colorspace;
-    } else if (videoStream.color_primaries) {
-      colorspace = videoStream.color_primaries;
-    }
-    
-    // 컬러 트랜스퍼 정보
-    let colorTransfer = 'unknown';
-    if (videoStream.color_transfer) {
-      colorTransfer = videoStream.color_transfer;
-    } else if (videoStream.color_trc) {
-      colorTransfer = videoStream.color_trc;
-    } else if (videoStream.transfer_characteristics) {
-      colorTransfer = videoStream.transfer_characteristics;
-    }
-    
-    // 비디오 코덱 정보
-    let codec = 'unknown';
-    if (videoStream.codec_name) {
-      codec = videoStream.codec_name.toUpperCase();
-    }
-    
-    // 비트 심도 정보
-    let bitDepth = 'unknown';
-    if (videoStream.bits_per_raw_sample) {
-      bitDepth = `${videoStream.bits_per_raw_sample}-bit`;
-    } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p10')) {
-      bitDepth = '10-bit';
-    } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p12')) {
-      bitDepth = '12-bit';
-    } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p8')) {
-      bitDepth = '8-bit';
-    }
-    
-    // 픽셀 포맷 및 크로마 서브샘플링 정보
-    let pixelFormat = 'unknown';
-    let chromaSubsampling = 'unknown';
-    if (videoStream.pix_fmt) {
-      pixelFormat = videoStream.pix_fmt;
-      
-      // 크로마 서브샘플링 추론
-      if (videoStream.pix_fmt.includes('444')) {
-        chromaSubsampling = '4:4:4';
-      } else if (videoStream.pix_fmt.includes('422')) {
-        chromaSubsampling = '4:2:2';
-      } else if (videoStream.pix_fmt.includes('420')) {
-        chromaSubsampling = '4:2:0';
-      }
-    }
-    
-    // 스캔 타입 정보 (인터레이스 또는 프로그레시브)
-    let scanType = 'unknown';
-    if (videoStream.field_order) {
-      if (videoStream.field_order === 'progressive') {
-        scanType = 'Progressive';
-      } else {
-        scanType = 'Interlaced';
-      }
-    }
-    
-    // 비트레이트 정보
-    let bitrate = 'unknown';
-    if (videoStream.bit_rate) {
-      const bitrateMbps = Math.round(parseInt(videoStream.bit_rate) / 1000000);
-      bitrate = `${bitrateMbps} Mbps`;
-    } else if (metadata.format && metadata.format.bit_rate) {
-      const bitrateMbps = Math.round(parseInt(metadata.format.bit_rate) / 1000000);
-      bitrate = `${bitrateMbps} Mbps`;
-    }
-    
-    // 사용자 친화적인 이름으로 변환
-    colorspace = friendlyColorspaceName(colorspace);
-    colorTransfer = friendlyTransferName(colorTransfer);
-    
-    console.log(`Video Codec: ${codec}`);
-    console.log(`Video FPS: ${fps}, Duration: ${duration}s, Total frames: ${frames}`);
-    console.log(`Color Space: ${colorspace}, Color Transfer: ${colorTransfer}`);
-    console.log(`Bit Depth: ${bitDepth}, Chroma Subsampling: ${chromaSubsampling}`);
-    console.log(`Scan Type: ${scanType}, Bitrate: ${bitrate}`);
-    
-    return { 
-      width: videoStream.width, 
-      height: videoStream.height,
-      duration: duration,
-      frames: frames,
-      colorspace: colorspace,
-      color_transfer: colorTransfer,
-      codec: codec,
-      fps: fps,
-      bit_depth: bitDepth,
-      chroma_subsampling: chromaSubsampling,
-      scan_type: scanType,
-      bitrate: bitrate,
-      pixel_format: pixelFormat
-    };
+    // ffprobe 호출을 Promise로 래핑
+    return new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err) {
+          console.error('Error in ffprobe:', err);
+          return reject(err);
+        }
+        
+        // 전체 메타데이터 로깅 (디버깅용)
+        console.log('Full metadata:', JSON.stringify(metadata, null, 2));
+        
+        // 비디오 스트림 찾기
+        let videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+        
+        if (!videoStream) {
+          console.log('No valid video stream found');
+          return reject(new Error('No valid video stream found'));
+        }
+        
+        console.log(`Video dimensions: ${videoStream.width}x${videoStream.height}`);
+        
+        // 전체 비디오 스트림 정보 로깅 (디버깅용)
+        console.log('Full video stream metadata:', JSON.stringify(videoStream, null, 2));
+        
+        // 프레임 레이트 계산
+        let fps = 0;
+        if (videoStream.r_frame_rate) {
+          const [num, den] = videoStream.r_frame_rate.split('/');
+          fps = parseInt(num) / parseInt(den);
+        } else if (videoStream.avg_frame_rate) {
+          const [num, den] = videoStream.avg_frame_rate.split('/');
+          if (den !== '0') {
+            fps = parseInt(num) / parseInt(den);
+          }
+        }
+        
+        // 총 프레임 수 계산
+        let frames = 0;
+        if (fps > 0 && videoStream.duration) {
+          frames = Math.round(fps * parseFloat(videoStream.duration));
+        } else if (videoStream.nb_frames) {
+          frames = parseInt(videoStream.nb_frames);
+        } else if (metadata.format && metadata.format.duration) {
+          frames = Math.round(fps * parseFloat(metadata.format.duration));
+        }
+        
+        // 재생 시간
+        let duration = videoStream.duration || 0;
+        if (duration === 0 && metadata.format && metadata.format.duration) {
+          duration = parseFloat(metadata.format.duration);
+        }
+        
+        // 나머지 메타데이터 추출 코드 (기존과 동일)
+        let colorspace = 'unknown';
+        if (videoStream.color_space) {
+          colorspace = videoStream.color_space;
+        } else if (videoStream.colorspace) {
+          colorspace = videoStream.colorspace;
+        } else if (videoStream.color_primaries) {
+          colorspace = videoStream.color_primaries;
+        }
+        
+        // 비디오 코덱 정보
+        let codec = 'unknown';
+        if (videoStream.codec_name) {
+          codec = videoStream.codec_name.toUpperCase();
+        }
+        
+        // 비트 심도 정보
+        let bitDepth = 'unknown';
+        if (videoStream.bits_per_raw_sample) {
+          bitDepth = `${videoStream.bits_per_raw_sample}-bit`;
+        } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p10')) {
+          bitDepth = '10-bit';
+        } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p12')) {
+          bitDepth = '12-bit';
+        } else if (videoStream.pix_fmt && videoStream.pix_fmt.includes('p8')) {
+          bitDepth = '8-bit';
+        }
+        
+        // 컬러 트랜스퍼 정보
+        let colorTransfer = 'unknown';
+        if (videoStream.color_transfer) {
+          colorTransfer = videoStream.color_transfer;
+        } else if (videoStream.color_trc) {
+          colorTransfer = videoStream.color_trc;
+        } else if (videoStream.transfer_characteristics) {
+          colorTransfer = videoStream.transfer_characteristics;
+        }
+        
+        // 픽셀 포맷 및 크로마 서브샘플링 정보
+        let pixelFormat = 'unknown';
+        let chromaSubsampling = 'unknown';
+        if (videoStream.pix_fmt) {
+          pixelFormat = videoStream.pix_fmt;
+          
+          // 크로마 서브샘플링 추론
+          if (videoStream.pix_fmt.includes('444')) {
+            chromaSubsampling = '4:4:4';
+          } else if (videoStream.pix_fmt.includes('422')) {
+            chromaSubsampling = '4:2:2';
+          } else if (videoStream.pix_fmt.includes('420')) {
+            chromaSubsampling = '4:2:0';
+          }
+        }
+        
+        // 스캔 타입 정보 (인터레이스 또는 프로그레시브)
+        let scanType = 'unknown';
+        if (videoStream.field_order) {
+          if (videoStream.field_order === 'progressive') {
+            scanType = 'Progressive';
+          } else {
+            scanType = 'Interlaced';
+          }
+        }
+        
+        // 비트레이트 정보
+        let bitrate = 'unknown';
+        if (videoStream.bit_rate) {
+          const bitrateMbps = Math.round(parseInt(videoStream.bit_rate) / 1000000);
+          bitrate = `${bitrateMbps} Mbps`;
+        } else if (metadata.format && metadata.format.bit_rate) {
+          const bitrateMbps = Math.round(parseInt(metadata.format.bit_rate) / 1000000);
+          bitrate = `${bitrateMbps} Mbps`;
+        }
+        
+        // 사용자 친화적인 이름으로 변환
+        colorspace = friendlyColorspaceName(colorspace);
+        colorTransfer = friendlyTransferName(colorTransfer);
+        
+        console.log(`Video Codec: ${codec}`);
+        console.log(`Video FPS: ${fps}, Duration: ${duration}s, Total frames: ${frames}`);
+        console.log(`Color Space: ${colorspace}, Color Transfer: ${colorTransfer}`);
+        console.log(`Bit Depth: ${bitDepth}, Chroma Subsampling: ${chromaSubsampling}`);
+        console.log(`Scan Type: ${scanType}, Bitrate: ${bitrate}`);
+        
+        resolve({ 
+          width: videoStream.width, 
+          height: videoStream.height,
+          duration: duration,
+          frames: frames,
+          colorspace: colorspace,
+          color_transfer: colorTransfer,
+          codec: codec,
+          fps: fps,
+          bit_depth: bitDepth,
+          chroma_subsampling: chromaSubsampling,
+          scan_type: scanType,
+          bitrate: bitrate,
+          pixel_format: pixelFormat
+        });
+      });
+    });
   } catch (error) {
     console.error('Error in extractFFProbeData:', error);
     throw error;
@@ -1009,4 +1241,26 @@ ipcMain.handle('get-video-metadata', async (event, filePath) => {
     console.error('Error getting video metadata:', error);
     return null;
   }
+});
+
+// Add IPC handlers for update functions
+ipcMain.on('check-for-updates', (event) => {
+  console.log('Received check-for-updates request');
+  try {
+    if (app.isPackaged) {
+      console.log('Checking for updates (packaged app)');
+      autoUpdater.checkForUpdatesAndNotify();
+      event.returnValue = { success: true, message: 'Update check started.' };
+    } else {
+      console.log('Update checks are disabled in dev mode');
+      event.returnValue = { success: false, message: 'Updates are disabled in development mode.' };
+    }
+  } catch (error) {
+    console.error('Error checking for updates:', error);
+    event.returnValue = { success: false, message: `Error: ${error.message}` };
+  }
+});
+
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
 }); 

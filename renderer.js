@@ -1966,8 +1966,48 @@ function initializeApp() {
   updateUI();
 }
 
-// 앱 초기화 호출
+// 앱 초기화
 initializeApp();
+
+// 업데이트 버튼 이벤트 리스너 등록
+const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
+if (checkUpdatesBtn) {
+  console.log('Found update button:', checkUpdatesBtn);
+  checkUpdatesBtn.addEventListener('click', function() {
+    console.log('Update button clicked');
+    checkForUpdates();
+  });
+}
+
+const checkUpdatesBtn2 = document.getElementById('checkUpdatesBtn2');
+if (checkUpdatesBtn2) {
+  console.log('Found second update button:', checkUpdatesBtn2);
+  checkUpdatesBtn2.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('Second update button clicked');
+    checkForUpdates();
+  });
+}
+
+// 어바웃 모달 이벤트 리스너 추가
+const aboutModal = document.getElementById('aboutModal');
+const openAboutModalBtn = document.getElementById('openAboutModalBtn');
+const closeAboutModalBtn = document.getElementById('closeAboutModalBtn');
+
+if (openAboutModalBtn) {
+  console.log('Found About modal button:', openAboutModalBtn);
+  openAboutModalBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('About modal button clicked!');
+    if (aboutModal) aboutModal.classList.remove('hidden');
+  });
+}
+
+if (closeAboutModalBtn) {
+  closeAboutModalBtn.addEventListener('click', function() {
+    if (aboutModal) aboutModal.classList.add('hidden');
+  });
+}
 
 // 문서 클릭 이벤트를 통해 모달 닫기
 document.addEventListener('click', function(event) {

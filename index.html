@@ -307,7 +307,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                 </div>
 
                 <div class="sidebar-footer-version">
-                    <span>© 2025 <a href="https://heimlich.studio" class="footer-link">HEIMLICH®</a> <button id="versionInfoBtn" class="footer-link btn-text">v0.0.4</button></span>
+                    <span>© 2025 <a href="https://heimlich.studio" class="footer-link">HEIMLICH®</a> <button id="versionInfoBtn" class="footer-link btn-text">-</button></span>
                 </div>
             </div>
         </div>
@@ -798,7 +798,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                     <div class="settings-group">
                         <h4>About</h4>
                         <div class="settings-about">
-                            <p>RENAMER by HEIMLICH® Version 0.0.4</p>
+                            <p>RENAMER by HEIMLICH® Version <span id="appVersionDisplay">-</span></p>
                             <p>© 2025 HEIMLICH</p>
                             <div class="settings-links">
                                 <a href="#" id="openAboutModalBtn" class="settings-link">View Details</a>
@@ -816,7 +816,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Application Version:</span>
-                                <span class="info-value">0.0.4</span>
+                                <span class="info-value" id="currentVersionDisplay">-</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">Electron:</span>
@@ -826,6 +826,17 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
 
                         <div class="update-section">
                             <button id="checkUpdatesBtn" class="btn-outline btn-small">Check for Updates</button>
+                            <div class="version-info">
+                                <div class="version-item">
+                                    <span class="version-label">Current Version:</span>
+                                    <span class="version-value" id="currentVersionDisplay">-</span>
+                                </div>
+                                <div class="version-item">
+                                    <span class="version-label">Latest Version:</span>
+                                    <span class="version-value" id="latestVersionDisplay">-</span>
+                                </div>
+                            </div>
+                            <div id="updateStatus" class="update-status"></div>
                         </div>
                     </div>
                 </div>
@@ -842,7 +853,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                 <div class="about-bg-pattern"></div>
                 <div class="about-header-content">
                     <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="RENAMER by HEIMLICH" class="about-logo">
-                    <div class="about-version">Version 0.0.4</div>
+                    <div class="about-version">-</div>
                     <div class="about-tagline">Advanced file renaming tool for creators</div>
                 </div>
             </div>
@@ -872,8 +883,12 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                             <span class="info-value" id="aboutSystemOS">-</span>
                         </div>
                         <div class="info-item">
-                            <span class="info-label">Application Version:</span>
-                            <span class="info-value">0.0.4</span>
+                            <span class="info-label">Current Version:</span>
+                            <span class="info-value" id="aboutAppVersionDisplay">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Latest Available:</span>
+                            <span class="info-value" id="aboutLatestVersionDisplay">-</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Electron:</span>
@@ -901,6 +916,8 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
               </svg> Check Updates
                     </a>
                 </div>
+                
+                <div id="aboutUpdateStatus" class="update-status"></div>
             </div>
 
             <div class="about-footer">

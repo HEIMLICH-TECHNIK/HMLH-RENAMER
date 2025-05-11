@@ -6,6 +6,8 @@ pnpm-lock.yaml
 
 # Build output
 dist/
+!dist/latest-mac.yml
+!dist/latest.yml
 build/
 out/
 release/

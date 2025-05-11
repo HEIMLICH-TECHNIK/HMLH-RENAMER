@@ -1,11 +1,11 @@
 version: 0.0.5
 files:
   - url: hmlh-renamer-0.0.5-arm64-mac.zip
-    sha512: MA59tbSVGe5VCLRzLOvz52NcsrM5SRdTpSQ9qun8DPZN7sX/gKBoP7AoSQbM+K7ZoVKiIxA6ykyyWcswYChoPg==
-    size: 117152969
+    sha512: qQCKmlZCeUvmqu6dUfA9/WnPVzd3hymRR54c1l7v/cgPphKY0Yz4X1mfChZ5zYUD3Q8PbPgEiC5jHfZU6yqiTw==
+    size: 117153170
   - url: hmlh-renamer-0.0.5.dmg
-    sha512: rMtWN2Cfp7qraTkFF1rrbJaUmPBBfXE+keYsE+T96ABPa9g9mje+oSEYQ/aGuicMvuY/djHDaVbk83h/H4b9Sg==
-    size: 121253326
+    sha512: pUBMzT7QV+i6Pe9MCij5kfDaT2vruBX7ErTl98WPi/uBhxNG9gQZI6u5WWMZG/DGdFfFugbyiPIZXl0jQN4HsQ==
+    size: 121248605
 path: hmlh-renamer-0.0.5-arm64-mac.zip
-sha512: MA59tbSVGe5VCLRzLOvz52NcsrM5SRdTpSQ9qun8DPZN7sX/gKBoP7AoSQbM+K7ZoVKiIxA6ykyyWcswYChoPg==
-releaseDate: '2025-05-11T07:47:21.527Z'
+sha512: qQCKmlZCeUvmqu6dUfA9/WnPVzd3hymRR54c1l7v/cgPphKY0Yz4X1mfChZ5zYUD3Q8PbPgEiC5jHfZU6yqiTw==
+releaseDate: '2025-05-11T08:26:02.139Z'

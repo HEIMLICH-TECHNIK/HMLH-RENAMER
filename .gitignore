@@ -5,7 +5,9 @@ yarn.lock
 pnpm-lock.yaml
 
 # Build output
-dist/
+# First ignore everything in the dist directory
+dist/**/*
+# Then un-ignore the specific yml files
 !dist/latest-mac.yml
 !dist/latest.yml
 build/

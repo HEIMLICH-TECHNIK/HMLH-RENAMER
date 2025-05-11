@@ -42,6 +42,49 @@ import {
     deleteRule
 } from './components/modal.js';
 
+// 커스텀 이벤트 리스너 추가 - 인라인 스크립트에서 발생시킨 이벤트 처리
+document.addEventListener('files-selected', function(e) {
+  const filePaths = e.detail;
+  if (filePaths && filePaths.length > 0) {
+    // 파일 목록 업데이트
+    State.selectedFiles = [...filePaths];
+    
+    // 첫 파일 추가 시 히스토리 초기화
+    if (State.fileHistory.length === 0) {
+      console.log('First files added, initializing history');
+      State.fileHistory = [];
+      State.historyIndex = -1;
+      State.initialState = null;
+    }
+    
+    // 히스토리 저장
+    saveToHistory('add-files');
+    
+    // 미디어 파일 감지 및 메타데이터 로드
+    loadMediaMetadata(filePaths);
+    
+    // UI 명시적 업데이트
+    // DOM이 정의되어 있는지 확인
+    if (DOM) {
+      if (DOM.mainContent) DOM.mainContent.classList.remove('empty');
+      if (DOM.emptyDropArea) DOM.emptyDropArea.style.display = 'none';
+      if (DOM.filesPreview) DOM.filesPreview.classList.remove('hidden');
+      if (DOM.applyBtn) DOM.applyBtn.disabled = false;
+      
+      // 파일 개수 업데이트
+      if (DOM.fileCount) {
+        DOM.fileCount.textContent = State.selectedFiles.length === 1 ?
+          '1 file selected' :
+          `${State.selectedFiles.length} files selected`;
+      }
+    }
+    
+    // UI 전체 업데이트
+    updateUI();
+    console.log(`Added ${filePaths.length} files via button click, total: ${State.selectedFiles.length}`);
+  }
+});
+
 /**
  * 선택된 파일 목록 업데이트
  */
@@ -241,17 +284,16 @@ function updateUI() {
         DOM.mainContent.classList.remove('empty');
         DOM.emptyDropArea.style.display = 'none';
         DOM.filesPreview.classList.remove('hidden');
-
         DOM.applyBtn.disabled = false;
-
-        // 파일 개수 업데이트
-        DOM.fileCount.textContent = State.selectedFiles.length === 1 ?
-            '1 file selected' :
-            `${State.selectedFiles.length} files selected`;
 
         // 미리보기 업데이트
         updatePreview();
     }
+
+    // 파일 개수 업데이트 - 조건문 바깥으로 이동
+    DOM.fileCount.textContent = State.selectedFiles.length === 1 ?
+        '1 file selected' :
+        `${State.selectedFiles.length} files selected`;
 
     // 히스토리 버튼 상태 업데이트
     updateHistoryButtons(DOM.undoBtn, DOM.redoBtn);

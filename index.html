@@ -923,32 +923,6 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
         if (fileSelectBtn) {
           // 버튼이 보이도록 설정
           fileSelectBtn.style.display = 'inline-block';
-          
-          // 이벤트 리스너 명시적 추가
-          fileSelectBtn.addEventListener('click', async function() {
-            if (window.api && window.api.getFilePaths) {
-              try {
-                const filePaths = await window.api.getFilePaths();
-                if (filePaths && filePaths.length > 0) {
-                  // 기존 renderer.js가 이벤트를 처리할 수 있도록 커스텀 이벤트 발생
-                  const event = new CustomEvent('files-selected', { detail: filePaths });
-                  document.dispatchEvent(event);
-                  
-                  // 파일이 선택되었으므로 UI 업데이트
-                  if (emptyDropArea && filesPreview && mainContent) {
-                    // 빈 영역 숨기고 미리보기 표시
-                    emptyDropArea.style.display = 'none';
-                    filesPreview.classList.remove('hidden');
-                    mainContent.classList.remove('empty');
-                  }
-                }
-              } catch (error) {
-                console.error('Error selecting files:', error);
-              }
-            } else {
-              console.error('API not available. Make sure preload.js is properly configured.');
-            }
-          });
         } else {
           console.error('File select button not found in DOM');
         }

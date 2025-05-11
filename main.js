@@ -158,12 +158,112 @@ ipcMain.handle('rename-files', async (event, files, config) => {
           const day = String(today.getDate()).padStart(2, '0');
           const dateString = `${year}-${month}-${day}`;
           
+          // 미디어 파일 메타데이터 가져오기
+          let mediaMetadata = null;
+          
+          // 확장자로 이미지/비디오 파일 확인
+          const isImage = /\.(jpe?g|png|gif|bmp|webp|tiff?|exr|dpx|hdr|avif|heic|tga|svg|psd)$/i.test(filePath);
+          const isVideo = /\.(mp4|mov|avi|mkv|webm|wmv|flv|m4v|3gp|mxf|r3d|braw|ari|arw|sraw|raw)$/i.test(filePath);
+          
+          // 미디어 파일인 경우 메타데이터 가져오기
+          if (isImage || isVideo) {
+            try {
+              mediaMetadata = await handleGetImageSize(event, filePath);
+              
+              // 비디오일 경우 추가 메타데이터 가져오기
+              if (isVideo) {
+                const videoMetadata = await extractFFProbeData(filePath);
+                mediaMetadata = { ...mediaMetadata, ...videoMetadata };
+              }
+            } catch (error) {
+              console.error('Error getting media metadata:', error);
+              mediaMetadata = { width: 0, height: 0 };
+            }
+          }
+          
           // Replace variables in pattern
           newName = newName
             .replace(/{name}/g, baseName)
             .replace(/{ext}/g, fileExt.replace('.', ''))
             .replace(/{num}/g, numValue.toString())
             .replace(/{date}/g, dateString);
+          
+          // 미디어 메타데이터가 있을 경우 추가 변수 대체
+          if (mediaMetadata) {
+            // 기본 미디어 변수
+            newName = newName.replace(/{width}/g, mediaMetadata.width || 0);
+            newName = newName.replace(/{height}/g, mediaMetadata.height || 0);
+            
+            // 비디오 관련 변수
+            if (isVideo && mediaMetadata.duration) {
+              const duration = parseFloat(mediaMetadata.duration) || 0;
+              const frames = parseInt(mediaMetadata.frames) || 0;
+              
+              // 시간 포맷팅
+              const formatTime = (seconds) => {
+                if (!seconds || isNaN(seconds)) return "00:00:00";
+                seconds = Math.floor(seconds);
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+              };
+              
+              newName = newName.replace(/{duration}/g, duration.toString());
+              newName = newName.replace(/{duration_fmt}/g, formatTime(duration));
+              newName = newName.replace(/{frames}/g, frames.toString());
+              
+              // 추가 비디오 속성
+              if (mediaMetadata.colorspace) {
+                newName = newName.replace(/{colorspace}/g, mediaMetadata.colorspace);
+              }
+              if (mediaMetadata.color_transfer) {
+                newName = newName.replace(/{log}/g, mediaMetadata.color_transfer);
+              }
+              if (mediaMetadata.codec) {
+                newName = newName.replace(/{codec}/g, mediaMetadata.codec);
+              }
+              if (mediaMetadata.bit_depth) {
+                newName = newName.replace(/{bit_depth}/g, mediaMetadata.bit_depth);
+              }
+              if (mediaMetadata.chroma_subsampling) {
+                newName = newName.replace(/{chroma_subsampling}/g, mediaMetadata.chroma_subsampling);
+              }
+              if (mediaMetadata.scan_type) {
+                newName = newName.replace(/{scan_type}/g, mediaMetadata.scan_type);
+              }
+              if (mediaMetadata.bitrate) {
+                newName = newName.replace(/{bitrate}/g, mediaMetadata.bitrate);
+              }
+              if (mediaMetadata.pixel_format) {
+                newName = newName.replace(/{pixel_format}/g, mediaMetadata.pixel_format);
+              }
+            }
+            
+            // 파일 유형 변수
+            newName = newName.replace(/{is_image}/g, isImage ? "image" : "");
+            newName = newName.replace(/{is_video}/g, isVideo ? "video" : "");
+            
+            // 조건부 변수 처리
+            newName = newName.replace(/{if_image:(.*?)}/g, (match, content) => isImage ? content : "");
+            newName = newName.replace(/{if_video:(.*?)}/g, (match, content) => isVideo ? content : "");
+            
+            if (mediaMetadata.width && mediaMetadata.height) {
+              const isLandscape = mediaMetadata.width > mediaMetadata.height;
+              newName = newName.replace(/{if_landscape:(.*?)}/g, (match, content) => isLandscape ? content : "");
+              newName = newName.replace(/{if_portrait:(.*?)}/g, (match, content) => !isLandscape ? content : "");
+            }
+            
+            // 포맷 변수 처리
+            newName = newName.replace(/{upper_name}/g, baseName.toUpperCase());
+            newName = newName.replace(/{lower_name}/g, baseName.toLowerCase());
+            
+            // 숫자 패딩 변수 (예: {padnum3})
+            newName = newName.replace(/{padnum(\d+)}/g, (match, padCount) => {
+              const count = parseInt(padCount);
+              return numValue.toString().padStart(count, '0');
+            });
+          }
           
           // Add extension if not included in pattern
           if (fileExt && !newName.includes(fileExt)) {

@@ -764,15 +764,53 @@ async function generateNewName(filePath, index) {
             });
             break;
         case 'expression':
-            newName = await applyExpression(
-                baseName,
-                fileExt,
-                fileName,
-                filePath,
-                index,
-                DOM.expressionInput ? DOM.expressionInput.value : null,
-                metaData
-            );
+            // 표현식 방식도 각 파일별로 개별 처리
+            const expressionResults = [];
+
+            for (let i = 0; i < State.selectedFiles.length; i++) {
+                const file = State.selectedFiles[i];
+                const fileName = getFileName(file);
+                const { baseName, fileExt } = splitFileName(fileName);
+
+                // 해당 파일의 새 이름 생성
+                const newName = await applyExpression(
+                    baseName,
+                    fileExt,
+                    fileName,
+                    file,
+                    i,
+                    DOM.expressionInput ? DOM.expressionInput.value : null
+                );
+
+                if (newName !== fileName) {
+                    // 단일 파일 이름 변경
+                    const fileConfig = {
+                        method: 'pattern',
+                        pattern: newName
+                    };
+
+                    try {
+                        const result = await window.api.renameFiles([file], fileConfig);
+                        expressionResults.push(...result);
+                    } catch (error) {
+                        console.error(`Error renaming file ${file}:`, error);
+                        expressionResults.push({
+                            oldPath: file,
+                            success: false,
+                            error: error.message
+                        });
+                    }
+                } else {
+                    // 이름이 변경되지 않은 경우 (성공으로 처리)
+                    expressionResults.push({
+                        oldPath: file,
+                        newPath: file,
+                        success: true
+                    });
+                }
+            }
+
+            results = expressionResults;
             break;
     }
 
@@ -1614,9 +1652,12 @@ function initializeApp() {
 
     // 업데이트 기능 초기화
     initializeUpdater();
-
-    // 버전 표시 및 업데이트 기능 초기화
-    initializeUpdater();
+    
+    // 앱 시작 시 자동으로 업데이트 확인 트리거
+    setTimeout(() => {
+        console.log('Automatic startup update check...');
+        checkForUpdates();
+    }, 2000); // 앱 UI가 완전히 로딩된 후 2초 후에 업데이트 확인
     
     // 다른 모달 관련 코드도 showModal/hideModal 함수를 사용하도록 업데이트
     const closeRulesModalBtn = document.getElementById('closeRulesModalBtn');
@@ -1704,8 +1745,25 @@ function initializeUpdater() {
         });
     }
 
+    // 중복 메시지 방지를 위한 변수 추가
+    let lastUpdateMessage = '';
+    let lastMessageTime = 0;
+
     // 업데이트 상태 리스너 등록
     window.api.onUpdateStatus((message) => {
+        // 중복 메시지 방지 (동일한 메시지가 짧은 시간 내에 반복해서 오는 경우)
+        const now = Date.now();
+        const timeSinceLastMessage = now - lastMessageTime;
+        
+        if (message === lastUpdateMessage && timeSinceLastMessage < 1000) {
+            console.log('Duplicate update message ignored:', message);
+            return;
+        }
+        
+        // 메시지 및 시간 업데이트
+        lastUpdateMessage = message;
+        lastMessageTime = now;
+        
         console.log('Update status received:', message);
         updateStatusDisplay(message);
     });
@@ -1715,6 +1773,21 @@ function initializeUpdater() {
         console.log('Update versions received:', data);
         updateVersionsDisplay(data.currentVersion, data.latestVersion);
     });
+    
+    // 새로운 코드: 업데이트 가능 알림 리스너 등록
+    window.api.onUpdateAvailable((data) => {
+        console.log('Update available notification received:', data);
+        
+        // 토스트 알림 표시
+        import('../utils/toast.js').then(module => {
+            // showUpdateToast 함수 호출
+            module.showUpdateToast(data.currentVersion, data.latestVersion);
+        }).catch(error => {
+            console.error('Failed to import toast module:', error);
+            // 모듈 로드 실패 시 기본 토스트 표시
+            showToast(`New version ${data.latestVersion} is available!`, 'info');
+        });
+    });
 }
 
 /**
@@ -1722,20 +1795,29 @@ function initializeUpdater() {
  */
 function checkForUpdates() {
     try {
+        console.log('[DEBUG RENDERER] checkForUpdates called');
+        
         // 업데이트 상태 메시지 표시
-        updateStatusDisplay('Checking for updates...');
+        updateStatusDisplay('Checking for updates...', 'info');
         
         // 업데이트 확인 API 호출 (동기적)
         const result = window.api.checkForUpdates();
-        console.log('Update check result:', result);
+        console.log('[DEBUG RENDERER] Update check initial result:', result);
         
-        if (result.success) {
-            updateStatusDisplay(result.message, 'info');
-        } else {
+        if (!result.success) {
             updateStatusDisplay(result.message, 'warning');
         }
+        
+        // 5초 후에도 여전히 "Update check started" 메시지가 표시되어 있다면 타임아웃으로 처리
+        setTimeout(() => {
+            const statusElement = document.getElementById('updateStatus');
+            if (statusElement && statusElement.textContent === 'Update check started.') {
+                console.log('[DEBUG RENDERER] Update check timed out');
+                updateStatusDisplay('Update check timed out. Please try again.', 'error');
+            }
+        }, 5000);
     } catch (error) {
-        console.error('Failed to check for updates:', error);
+        console.error('[DEBUG RENDERER] Failed to check for updates:', error);
         updateStatusDisplay(`Update check failed: ${error.message}`, 'error');
     }
 }
@@ -1746,14 +1828,19 @@ function checkForUpdates() {
  * @param {string} type - 메시지 타입 (info, success, warning, error)
  */
 function updateStatusDisplay(message, type = '') {
+    console.log('[DEBUG RENDERER] updateStatusDisplay called with message:', message, 'type:', type);
+    
     // 모든 업데이트 상태 엘리먼트에 메시지 표시
     const statusElements = [
         document.getElementById('updateStatus'),
         document.getElementById('aboutUpdateStatus')
     ];
     
+    console.log('[DEBUG RENDERER] Status elements found:', statusElements.map(el => el ? el.id : 'null').join(', '));
+    
     statusElements.forEach(element => {
         if (element) {
+            console.log(`[DEBUG RENDERER] Updating element ${element.id} with message: ${message}`);
             element.textContent = message;
             
             // 기존 클래스 제거
@@ -1766,6 +1853,9 @@ function updateStatusDisplay(message, type = '') {
             
             // 메시지가 없으면 감추기
             element.style.display = message ? 'block' : 'none';
+            console.log(`[DEBUG RENDERER] Element ${element.id} updated, display: ${element.style.display}`);
+        } else {
+            console.log('[DEBUG RENDERER] Element is null or undefined');
         }
     });
 }

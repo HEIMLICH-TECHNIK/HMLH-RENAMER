@@ -1,6 +1,6 @@
 {
   "name": "hmlh-renamer",
-  "version": "0.0.5",
+  "version": "0.0.4",
   "description": "Advanced file renaming tool for creators by HEIMLICH®",
   "main": "main.js",
   "scripts": {
@@ -35,9 +35,26 @@
       "node_modules/@img/**/*",
       "node_modules/@ffprobe-installer/**/*"
     ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icons/app-icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "extraResources": [
+        {
+          "from": "node_modules/@ffprobe-installer/win32-x64/ffprobe.exe",
+          "to": "ffprobe/ffprobe.exe"
+        }
+      ]
+    },
     "mac": {
-      "category": "public.app-category.utilities",
+      "target": [
+        "dmg"
+      ],
       "icon": "assets/icons/app-icon.icns",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "category": "public.app-category.utilities",
       "extraResources": [
         {
           "from": "node_modules/@ffprobe-installer/darwin-arm64/ffprobe",
@@ -45,12 +62,17 @@
         }
       ]
     },
-    "win": {
-      "icon": "assets/icons/app-icon.ico",
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/icons/app-icon.png",
+      "artifactName": "${productName}-${version}.${ext}",
+      "category": "Utility",
       "extraResources": [
         {
-          "from": "node_modules/@ffprobe-installer/win32-x64/ffprobe.exe",
-          "to": "ffprobe/ffprobe.exe"
+          "from": "node_modules/@ffprobe-installer/linux-x64/ffprobe",
+          "to": "ffprobe/ffprobe"
         }
       ]
     },
@@ -60,33 +82,36 @@
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "assets/icons/app-icon.ico",
       "uninstallerIcon": "assets/icons/app-icon.ico",
-      "installerHeaderIcon": "assets/icons/app-icon.ico",
+      "license": "LICENSE",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
+      "installerHeaderIcon": "assets/icons/app-icon.ico",
       "shortcutName": "RENAMER by HEIMLICH®",
       "include": "installer.nsh",
       "installerSidebar": "assets/icons/installer-sidebar.png",
       "uninstallerSidebar": "assets/icons/installer-sidebar.png",
-      "artifactName": "RENAMER-Setup-${version}.${ext}",
+      "artifactName": "RENAMER by HEIMLICH®-Setup-${version}.${ext}",
       "deleteAppDataOnUninstall": true
-    },
-    "linux": {
-      "icon": "assets/icons/app-icon.png"
     },
     "files": [
       "**/*",
-      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!node_modules/.bin",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
       "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
-      "!**/node_modules/*/{.editorconfig,.eslintrc.json,.eslintrc,.eslintignore,.gitattributes,.github,.npmignore,.travis.yml,.yarn-integrity,.yarnclean,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log}"
+      ".editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
     ],
     "publish": {
       "provider": "github",
       "owner": "HEIMLICH-STUDIO",
       "repo": "HMLH-RENAMER",
-      "releaseType": "release",
-      "publishAutoUpdate": true
+      "releaseType": "release"
     }
   },
   "keywords": [

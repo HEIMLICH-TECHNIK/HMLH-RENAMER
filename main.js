@@ -3,6 +3,10 @@ const path = require('path');
 const fs = require('fs');
 const imageSize = require('image-size');
 const probeImageSize = require('probe-image-size');
+const https = require('https');
+
+// 업데이트 관리자 모듈 가져오기
+const updater = require('./updater');
 
 // Try to load sharp, but don't crash if it's not available
 let sharp;
@@ -30,91 +34,24 @@ try {
   const { autoUpdater: updater } = require('electron-updater');
   electronLog = require('electron-log');
   
-  // 로그 레벨 설정
-  electronLog.transports.file.level = 'silly';
-  electronLog.transports.console.level = 'silly';
+  electronLog.transports.file.level = 'debug';
+  electronLog.transports.console.level = 'debug';
   
+  // 더미 설정만 유지 (실제 업데이트는 updater.js에서 처리)
   autoUpdater = updater;
-  
-  // 로그 설정
   autoUpdater.logger = electronLog;
-  autoUpdater.logger.transports.file.level = 'silly';
   
-  // 프리릴리즈 허용 설정
-  autoUpdater.allowPrerelease = true;
-  autoUpdater.allowDowngrade = true;
-  autoUpdater.autoDownload = true;
-  autoUpdater.forceDevUpdateConfig = true;
-  autoUpdater.channel = 'latest';
-  
-  // GitHub 토큰 확인 (토큰이 있는 경우에만 설정)
-  // autoUpdater.requestHeaders = { "PRIVATE-TOKEN": "YOUR_TOKEN_HERE" };
-  
-  // 업데이트 이벤트 설정
-  autoUpdater.on('checking-for-update', () => {
-    electronLog.info('Checking for update...');
-    sendStatusToWindow('Checking for update...');
-  });
-  
-  autoUpdater.on('update-available', (info) => {
-    electronLog.info('Update available!', info);
-    sendStatusToWindow('Update available!');
-    sendUpdateInfo(app.getVersion(), info.version);
-    
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: `New version ${info.version} found.`,
-      detail: 'Downloading in background. You will be notified when it is ready to install.',
-      buttons: ['OK']
-    });
-  });
-  
-  autoUpdater.on('update-not-available', (info) => {
-    electronLog.info('Update not available', info);
-    if (info && info.version) {
-      sendUpdateInfo(app.getVersion(), info.version);
-    }
-    sendStatusToWindow('You are using the latest version!');
-  });
-  
-  autoUpdater.on('error', (err) => {
-    electronLog.error('Update error:', err);
-    sendStatusToWindow(`Update error: ${err.toString()}`);
-  });
-  
-  autoUpdater.on('download-progress', (progressObj) => {
-    let logMessage = `Download speed: ${progressObj.bytesPerSecond} - Downloaded: ${progressObj.percent.toFixed(2)}% (${progressObj.transferred}/${progressObj.total})`;
-    electronLog.info(logMessage);
-    sendStatusToWindow(logMessage);
-  });
-  
-  autoUpdater.on('update-downloaded', (info) => {
-    electronLog.info('Update downloaded', info);
-    sendStatusToWindow('Update downloaded!');
-    
-    const dialogOpts = {
-      type: 'info',
-      buttons: ['Restart Now', 'Later'],
-      title: 'Update Ready',
-      message: `New version ${info.version} has been downloaded.`,
-      detail: 'The application will restart to apply the update.'
-    };
-    
-    dialog.showMessageBox(dialogOpts).then((returnValue) => {
-      if (returnValue.response === 0) autoUpdater.quitAndInstall();
-    });
-  });
-  
-  console.log('Electron updater loaded successfully');
+  console.log('Electron updater loaded for passing to updater module');
 } catch (error) {
   console.warn('Could not load electron-updater, auto updates will be disabled', error);
   // Create dummy autoUpdater to prevent errors
   autoUpdater = {
     logger: null,
-    checkForUpdatesAndNotify: () => console.log('Update check disabled: electron-updater not available'),
-    on: () => null,
-    quitAndInstall: () => null
+    checkForUpdatesAndNotify: () => Promise.resolve(),
+    checkForUpdates: () => Promise.resolve(),
+    on: () => {},
+    once: () => {},
+    quitAndInstall: () => {}
   };
 }
 
@@ -160,20 +97,6 @@ if (app.isPackaged) {
 // ffmpeg에 ffprobe 경로 설정
 ffmpeg.setFfprobePath(ffprobePath);
 
-// Send update status to renderer
-function sendStatusToWindow(text) {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-status', text);
-  }
-}
-
-// Send current and latest version info to renderer
-function sendUpdateInfo(currentVersion, latestVersion) {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-versions', { currentVersion, latestVersion });
-  }
-}
-
 function createWindow() {
   // Create the browser window
   mainWindow = new BrowserWindow({
@@ -213,24 +136,15 @@ function createWindow() {
     shell.openExternal(url);
   });
 
+  // 업데이트 관리자 초기화
+  updater.initUpdater(mainWindow, autoUpdater, electronLog);
+
   // Show window when ready to prevent flickering
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     
-    // Check for updates after app is visible
-    if (app.isPackaged) {
-      // Only check for updates in production (packaged app)
-      console.log('Checking for updates on app start (production mode)');
-      setTimeout(() => {
-        try {
-          autoUpdater.checkForUpdatesAndNotify();
-        } catch (error) {
-          console.error('Error checking for updates on startup:', error);
-        }
-      }, 2000);
-    } else {
-      console.log('Update checks disabled in development mode');
-    }
+    // 앱 시작 시 업데이트 확인
+    updater.checkForUpdatesOnStartup();
   });
 
   // Open DevTools in development
@@ -1244,23 +1158,5 @@ ipcMain.handle('get-video-metadata', async (event, filePath) => {
 });
 
 // Add IPC handlers for update functions
-ipcMain.on('check-for-updates', (event) => {
-  console.log('Received check-for-updates request');
-  try {
-    if (app.isPackaged) {
-      console.log('Checking for updates (packaged app)');
-      autoUpdater.checkForUpdatesAndNotify();
-      event.returnValue = { success: true, message: 'Update check started.' };
-    } else {
-      console.log('Update checks are disabled in dev mode');
-      event.returnValue = { success: false, message: 'Updates are disabled in development mode.' };
-    }
-  } catch (error) {
-    console.error('Error checking for updates:', error);
-    event.returnValue = { success: false, message: `Error: ${error.message}` };
-  }
-});
-
-ipcMain.handle('get-app-version', () => {
-  return app.getVersion();
-}); 
+ipcMain.on('check-for-updates', updater.handleUpdateCheck);
+ipcMain.handle('get-app-version', updater.getAppVersion); 

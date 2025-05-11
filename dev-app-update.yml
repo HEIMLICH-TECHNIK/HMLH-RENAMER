@@ -1,0 +1,6 @@
+provider: github
+owner: HEIMLICH-STUDIO
+repo: HMLH-RENAMER
+updaterCacheDirName: hmlh-renamer-updater
+vPrefixedTagName: true
+releaseType: release 

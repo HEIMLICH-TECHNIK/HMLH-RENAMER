@@ -11,6 +11,17 @@ const ffprobe = require('ffprobe');
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow;
 
+// 아이콘 경로 설정
+const getIconPath = () => {
+  if (process.platform === 'win32') {
+    return path.join(__dirname, 'assets', 'icons', 'app-icon.ico');
+  } else if (process.platform === 'darwin') {
+    return path.join(__dirname, 'assets', 'icons', 'app-icon.icns');
+  } else {
+    return path.join(__dirname, 'assets', 'icons', 'app-icon.png');
+  }
+};
+
 // ffprobe 경로 설정 (개발 환경과 프로덕션 환경 모두 지원)
 let ffprobePath;
 if (app.isPackaged) {
@@ -51,7 +62,7 @@ function createWindow() {
     frame: true,
     backgroundColor: '#121212',
     title: 'RENAMER by HEIMLICH®',
-    icon: path.join(__dirname, 'assets/app-icon.png'),
+    icon: getIconPath(),
     show: false,
     enableLargerThanScreen: false,
     webPreferences: {

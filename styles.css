@@ -1,6 +1,8 @@
 /* Import Syne font from Google Fonts */
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap');
+/* Import Source Code Pro for monospace text */
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap');
 * {
     margin: 0;
     padding: 0;
@@ -712,7 +714,7 @@ select:focus {
     text-overflow: ellipsis;
     white-space: nowrap;
     padding-right: 10px;
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
 }
 
 .arrow {
@@ -731,7 +733,7 @@ select:focus {
     text-overflow: ellipsis;
     white-space: nowrap;
     padding-left: 10px;
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
 }
 
 .more-item {
@@ -984,7 +986,7 @@ select:focus {
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
     padding: 1px 4px;
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
     font-weight: bold;
 }
 
@@ -1446,7 +1448,7 @@ body.dark-mode .modal-body {
     border: 1px solid var(--input-border);
     border-radius: 8px;
     font-size: 13px;
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
     background-color: var(--input-bg);
     color: var(--input-text);
     resize: vertical;
@@ -1478,7 +1480,7 @@ body.dark-mode .modal-body {
 
 .var {
     color: #007aff;
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
     font-weight: 500;
 }
 
@@ -1581,7 +1583,7 @@ body.dark-mode .modal-body {
 
 .help-item span {
     color: var(--primary-color);
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
     font-weight: 500;
 }
 
@@ -1693,7 +1695,7 @@ body.dark-mode .modal-body {
     background: var(--bg-code);
     border-radius: 4px;
     color: var(--text-code);
-    font-family: 'Courier New', monospace;
+    font-family: 'Source Code Pro', monospace;
     font-size: 13px;
     overflow-x: auto;
     white-space: nowrap;
@@ -1766,7 +1768,7 @@ body.dark-mode .modal-body {
     background: var(--bg-code);
     border-radius: 4px;
     color: var(--text-code);
-    font-family: 'Courier New', monospace;
+    font-family: 'Source Code Pro', monospace;
     font-size: 0.85em;
 }
 
@@ -2324,7 +2326,7 @@ input:checked+.toggle-slider:before {
 .info-value {
     color: white;
     font-size: 13px;
-    font-family: monospace;
+    font-family: 'Source Code Pro', monospace;
 }
 
 .update-section {
@@ -2629,7 +2631,7 @@ input:checked+.toggle-slider:before {
 
 .version-value {
   color: var(--text-primary);
-  font-family: monospace;
+  font-family: 'Source Code Pro', monospace;
 }
 
 .version-value.update-available {

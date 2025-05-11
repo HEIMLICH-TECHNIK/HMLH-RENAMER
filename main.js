@@ -4,6 +4,7 @@ const fs = require('fs');
 const imageSize = require('image-size');
 const probeImageSize = require('probe-image-size');
 const https = require('https');
+const os = require('os');
 
 // 업데이트 관리자 모듈 가져오기
 const updater = require('./updater');
@@ -1157,6 +1158,34 @@ ipcMain.handle('get-video-metadata', async (event, filePath) => {
   }
 });
 
-// Add IPC handlers for update functions
-ipcMain.on('check-for-updates', updater.handleUpdateCheck);
-ipcMain.handle('get-app-version', updater.getAppVersion); 
+// 시스템 정보 가져오는 함수 추가
+ipcMain.handle('get-system-info', async () => {
+  try {
+    return {
+      os: `${os.platform()} ${os.release()} (${os.arch()})`,
+      electronVersion: process.versions.electron,
+      nodeVersion: process.versions.node,
+      chromeVersion: process.versions.chrome
+    };
+  } catch (error) {
+    console.error('Error getting system info:', error);
+    return {
+      os: 'Unknown',
+      electronVersion: 'Unknown',
+      nodeVersion: 'Unknown',
+      chromeVersion: 'Unknown'
+    };
+  }
+});
+
+// 업데이트 핸들러 
+ipcMain.on('check-for-updates', (event) => {
+  console.log('[MAIN] Checking for updates...');
+  const result = updater.handleUpdateCheck(event);
+  console.log('[MAIN] Update check result:', result);
+});
+
+// 앱 버전 반환
+ipcMain.handle('get-app-version', () => {
+  return updater.getAppVersion();
+}); 

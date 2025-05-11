@@ -1,6 +1,6 @@
 {
   "name": "hmlh-renamer",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Advanced file renaming tool for creators by HEIMLICH®",
   "main": "main.js",
   "scripts": {

@@ -7,7 +7,7 @@ const { app, dialog } = require('electron');
 const path = require('path');
 const https = require('https');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 
 // 기본 환경 설정
 let mainWindow = null;
@@ -85,6 +85,14 @@ function sendUpdateInfo(currentVersion, latestVersion) {
   }
 }
 
+// 다운로드 진행 상태 전송
+function sendDownloadProgress(progressPercent) {
+  console.log(`[UPDATER] Download progress: ${progressPercent.toFixed(2)}%`);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-download-progress', progressPercent);
+  }
+}
+
 // 업데이트 확인 처리
 exports.handleUpdateCheck = (event) => {
   console.log('[UPDATER] Received check-for-updates request');
@@ -95,6 +103,7 @@ exports.handleUpdateCheck = (event) => {
     if (now - lastUpdateCheckTime < UPDATE_CHECK_THROTTLE) {
       console.log('[UPDATER] Update check throttled, too frequent');
       event.returnValue = { success: false, message: 'Too frequent update checks.' };
+      sendStatusToWindow('Please wait before checking for updates again.');
       return;
     }
     
@@ -102,6 +111,7 @@ exports.handleUpdateCheck = (event) => {
     if (isCheckingForUpdates) {
       console.log('[UPDATER] Update check already in progress');
       event.returnValue = { success: false, message: 'Update check already in progress.' };
+      sendStatusToWindow('Update check in progress. Please wait...');
       return;
     }
     
@@ -109,6 +119,7 @@ exports.handleUpdateCheck = (event) => {
     if (isUpdateDialogOpen) {
       console.log('[UPDATER] Update dialog is already open');
       event.returnValue = { success: false, message: 'Update dialog already open.' };
+      sendStatusToWindow('Update dialog is already open.');
       return;
     }
     
@@ -368,7 +379,7 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
     type: 'info',
     title: 'Update Available',
     message: `New version ${latestVersion} is available (you have ${currentVersion})`,
-    buttons: ['Download Now', 'Later'],
+    buttons: ['Download & Install', 'Later'],
     defaultId: 0,
     cancelId: 1
   };
@@ -377,15 +388,15 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
     console.log('[UPDATER] Found matching asset:', matchingAsset.name);
     
     // 다운로드 링크가 있는 대화상자 표시
-    dialogOptions.detail = `Changes:\n${releaseNotes}\n\nWould you like to download this update?`;
+    dialogOptions.detail = `Changes:\n${releaseNotes}\n\nWould you like to download and install this update?`;
     
     dialog.showMessageBox(dialogOptions).then(({ response }) => {
       // 대화상자 종료 플래그 설정
       isUpdateDialogOpen = false;
       
       if (response === 0) {
-        // 브라우저로 다운로드 링크 열기
-        require('electron').shell.openExternal(matchingAsset.browser_download_url);
+        // 앱 내에서 업데이트 다운로드 및 설치 시작
+        downloadAndInstallUpdate(matchingAsset);
       }
     }).catch(err => {
       console.error('[UPDATER] Dialog error:', err);
@@ -395,7 +406,7 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
     console.log('[UPDATER] No matching asset found, showing generic update dialog');
     
     // 직접 다운로드 링크가 없는 경우 릴리스 페이지로 이동
-    dialogOptions.detail = `Changes:\n${releaseNotes}\n\nWould you like to visit the download page?`;
+    dialogOptions.detail = `Changes:\n${releaseNotes}\n\nNo automatic installer found. Would you like to visit the download page?`;
     dialogOptions.buttons = ['Open Download Page', 'Later'];
     
     dialog.showMessageBox(dialogOptions).then(({ response }) => {
@@ -408,6 +419,208 @@ function showUpdateAvailableDialog(releaseInfo, latestVersion, currentVersion) {
     }).catch(err => {
       console.error('[UPDATER] Dialog error:', err);
       isUpdateDialogOpen = false;
+    });
+  }
+}
+
+// 업데이트 다운로드 및 설치 함수
+function downloadAndInstallUpdate(asset) {
+  try {
+    console.log('[UPDATER] Starting download of update:', asset.name);
+    sendStatusToWindow('Downloading update...');
+    
+    // 앱 데이터 디렉토리에 다운로드 폴더 생성
+    const downloadDir = path.join(app.getPath('userData'), 'updates');
+    if (!fs.existsSync(downloadDir)) {
+      fs.mkdirSync(downloadDir, { recursive: true });
+    }
+    
+    // 다운로드할 파일 경로
+    const installerPath = path.join(downloadDir, asset.name);
+    
+    // 이전 다운로드 파일이 있으면 삭제
+    if (fs.existsSync(installerPath)) {
+      fs.unlinkSync(installerPath);
+    }
+    
+    // 파일 다운로드
+    const file = fs.createWriteStream(installerPath);
+    
+    console.log('[UPDATER] Downloading from URL:', asset.browser_download_url);
+    
+    // 리다이렉션을 처리하는 함수
+    const downloadWithRedirects = (url) => {
+      console.log('[UPDATER] Requesting:', url);
+      
+      // URL 파싱하여 요청 옵션 생성
+      const parsedUrl = new URL(url);
+      const options = {
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.pathname + parsedUrl.search,
+        headers: {
+          'User-Agent': 'HMLH-RENAMER-Updater',
+          'Accept': 'application/octet-stream'
+        },
+        timeout: 30000
+      };
+      
+      https.get(options, (response) => {
+        // 리다이렉션 응답 처리 (301, 302, 303, 307, 308)
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          console.log(`[UPDATER] Redirect to: ${response.headers.location}`);
+          
+          // 응답 정리
+          response.resume();
+          
+          // 리다이렉션 URL로 다시 요청
+          return downloadWithRedirects(response.headers.location);
+        }
+        
+        if (response.statusCode !== 200) {
+          file.close();
+          fs.unlinkSync(installerPath);
+          sendStatusToWindow(`Download failed: Server returned ${response.statusCode}`);
+          console.error(`[UPDATER] Download failed: Server returned ${response.statusCode}`);
+          return;
+        }
+        
+        const totalSize = parseInt(response.headers['content-length'], 10);
+        let downloadedSize = 0;
+        
+        response.on('data', (chunk) => {
+          file.write(chunk);
+          downloadedSize += chunk.length;
+          
+          // 진행률 계산 및 표시
+          if (totalSize) {
+            const percent = (downloadedSize / totalSize) * 100;
+            sendDownloadProgress(percent);
+          }
+        });
+        
+        response.on('end', () => {
+          file.end();
+          sendStatusToWindow('Download complete. Preparing to install...');
+          console.log('[UPDATER] Download complete:', installerPath);
+          
+          // 다운로드 완료 후 확인 대화상자 표시
+          dialog.showMessageBox({
+            type: 'info',
+            title: 'Ready to Install',
+            message: 'Update downloaded successfully',
+            detail: 'The application will close and the update will be installed.',
+            buttons: ['Install Now', 'Later'],
+            defaultId: 0,
+            cancelId: 1
+          }).then(({ response }) => {
+            if (response === 0) {
+              // 업데이트 설치 실행
+              installUpdate(installerPath);
+            } else {
+              sendStatusToWindow('Update installation postponed. Will install on next restart.');
+            }
+          });
+        });
+      }).on('error', (err) => {
+        file.close();
+        fs.unlinkSync(installerPath);
+        sendStatusToWindow(`Download failed: ${err.message}`);
+        console.error('[UPDATER] Download error:', err);
+      });
+    };
+    
+    // 다운로드 시작
+    downloadWithRedirects(asset.browser_download_url);
+  } catch (error) {
+    console.error('[UPDATER] Error in download process:', error);
+    sendStatusToWindow(`Update download failed: ${error.message}`);
+  }
+}
+
+// 플랫폼별 업데이트 설치 구현
+function installUpdate(installerPath) {
+  try {
+    console.log('[UPDATER] Installing update from:', installerPath);
+    sendStatusToWindow('Installing update...');
+    
+    const platform = process.platform;
+    
+    if (platform === 'win32') {
+      // Windows: 설치 프로그램 실행 후 앱 종료
+      console.log('[UPDATER] Running Windows installer');
+      
+      // 별도의 프로세스로 인스톨러 실행
+      spawn(installerPath, ['--updated'], {
+        detached: true,
+        stdio: 'ignore'
+      }).unref();
+      
+      // 앱 종료
+      app.quit();
+    } else if (platform === 'darwin') {
+      // macOS: DMG 마운트 또는 pkg 실행
+      console.log('[UPDATER] Running macOS installer');
+      
+      if (installerPath.endsWith('.dmg')) {
+        // DMG 파일 마운트 및 앱 복사 명령
+        const mountProcess = spawn('open', [installerPath], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        mountProcess.unref();
+        
+        // 사용자에게 안내 메시지 표시
+        dialog.showMessageBox({
+          type: 'info',
+          title: 'DMG Mounted',
+          message: 'Please complete the installation manually',
+          detail: 'The DMG file has been opened. Please drag the application to the Applications folder to complete the installation.',
+          buttons: ['OK'],
+          defaultId: 0
+        }).then(() => {
+          app.quit();
+        });
+      } else if (installerPath.endsWith('.pkg')) {
+        // PKG 설치 프로그램 실행
+        spawn('open', [installerPath], {
+          detached: true,
+          stdio: 'ignore'
+        }).unref();
+        app.quit();
+      }
+    } else if (platform === 'linux') {
+      // Linux: .deb 또는 AppImage 처리
+      console.log('[UPDATER] Running Linux installer');
+      
+      if (installerPath.endsWith('.deb')) {
+        // Debian 패키지 설치
+        spawn('gdebi', [installerPath], {
+          detached: true,
+          stdio: 'ignore'
+        }).unref();
+      } else if (installerPath.endsWith('.AppImage')) {
+        // AppImage에 실행 권한 부여 후 실행
+        fs.chmodSync(installerPath, '755');
+        spawn(installerPath, [], {
+          detached: true,
+          stdio: 'ignore'
+        }).unref();
+      }
+      
+      app.quit();
+    }
+  } catch (error) {
+    console.error('[UPDATER] Error installing update:', error);
+    sendStatusToWindow(`Installation failed: ${error.message}`);
+    
+    // 오류 발생 시 사용자에게 알림
+    dialog.showMessageBox({
+      type: 'error',
+      title: 'Installation Failed',
+      message: 'Failed to install update',
+      detail: `Error: ${error.message}\n\nPlease try downloading and installing manually.`,
+      buttons: ['OK'],
+      defaultId: 0
     });
   }
 }

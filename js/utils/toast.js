@@ -123,8 +123,10 @@ function showUpdateToast(currentVersion, latestVersion) {
  * 자세히 보기 버튼이 있는 토스트 표시
  * @param {string} message - 표시할 메시지
  * @param {string} type - 토스트 타입 ('info', 'success', 'error')
+ * @param {boolean} showViewDetailsButton - View Details 버튼을 표시할지 여부
+ * @param {string} detailsButtonText - 자세히 보기 버튼 텍스트 (기본: 'Details')
  */
-function showToastWithDetails(message, type = 'info') {
+function showToastWithDetails(message, type = 'info', showViewDetailsButton = false, detailsButtonText = 'Details') {
   // 기존 토스트 제거
   const existingToast = document.querySelector('.toast');
   if (existingToast) {
@@ -135,13 +137,16 @@ function showToastWithDetails(message, type = 'info') {
     }
   }
 
+  // 버튼 텍스트 설정
+  const buttonText = showViewDetailsButton ? 'View Details' : detailsButtonText;
+
   // 새 토스트 생성
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.innerHTML = `
     <div class="toast-content">
       <span>${message}</span>
-      <button class="toast-details">Details</button>
+      <button class="toast-details">${buttonText}</button>
       <button class="toast-close">&times;</button>
     </div>
   `;

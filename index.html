@@ -826,17 +826,6 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
 
                         <div class="update-section">
                             <button id="checkUpdatesBtn" class="btn-outline btn-small">Check for Updates</button>
-                            <div class="version-info">
-                                <div class="version-item">
-                                    <span class="version-label">Current Version:</span>
-                                    <span class="version-value" id="currentVersionDisplay">-</span>
-                                </div>
-                                <div class="version-item">
-                                    <span class="version-label">Latest Version:</span>
-                                    <span class="version-value" id="latestVersionDisplay">-</span>
-                                </div>
-                            </div>
-                            <div id="updateStatus" class="update-status"></div>
                         </div>
                     </div>
                 </div>
@@ -942,6 +931,41 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
           fileSelectBtn.style.display = 'inline-block';
         } else {
           console.error('File select button not found in DOM');
+        }
+        
+        // 버전 정보 버튼이 누락된 경우 대비
+        const versionInfoBtn = document.getElementById('versionInfoBtn');
+        if (versionInfoBtn) {
+          versionInfoBtn.style.cursor = 'pointer';
+          // 이벤트 리스너는 updater.js에서 처리됨
+        }
+        
+        // About 모달 닫기 버튼
+        const closeAboutModalBtn = document.getElementById('closeAboutModalBtn');
+        if (closeAboutModalBtn) {
+          closeAboutModalBtn.addEventListener('click', function() {
+            document.getElementById('aboutModal').classList.add('hidden');
+          });
+        }
+        
+        // 시스템 정보 표시
+        try {
+          const systemOSElements = document.querySelectorAll('#systemOS, #aboutSystemOS');
+          const electronVersionElements = document.querySelectorAll('#electronVersion, #aboutElectronVersion');
+          
+          if (window.api && window.api.getSystemInfo) {
+            window.api.getSystemInfo().then(info => {
+              systemOSElements.forEach(el => {
+                if (el) el.textContent = info.os || 'Unknown';
+              });
+              
+              electronVersionElements.forEach(el => {
+                if (el) el.textContent = info.electronVersion || 'Unknown';
+              });
+            }).catch(err => console.error('Error getting system info:', err));
+          }
+        } catch (e) {
+          console.error('Error updating system info:', e);
         }
       });
     </script>

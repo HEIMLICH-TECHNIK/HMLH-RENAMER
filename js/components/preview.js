@@ -9,6 +9,9 @@ import { getFileName, splitFileName } from '../utils/file-utils.js';
 import { showToast } from '../utils/toast.js';
 import { getDragAfterElement } from './file-handler.js';
 
+// 업데이트 중복 방지를 위한 토큰
+let previewUpdateId = 0;
+
 // 이름 변경 방식 모듈 임포트
 import { applyPattern } from '../rename-methods/pattern.js';
 import { applyFindReplace } from '../rename-methods/replace.js';
@@ -21,9 +24,12 @@ import { applyExpression } from '../rename-methods/expression.js';
  * 미리보기 업데이트
  */
 export async function updatePreview(DOM) {
+    const updateId = ++previewUpdateId;
+
     if (!DOM) return;
 
     if (State.selectedFiles.length === 0) {
+        if (updateId !== previewUpdateId) return;
         DOM.previewArea.innerHTML = '<p>Select files to see preview</p>';
         return;
     }
@@ -34,9 +40,13 @@ export async function updatePreview(DOM) {
     previewList.className = 'preview-list';
 
     for (let index = 0; index < State.selectedFiles.length; index++) {
+        if (updateId !== previewUpdateId) return;
+
         const file = State.selectedFiles[index];
         const oldName = getFileName(file);
         const newName = await generateNewName(file, index);
+
+        if (updateId !== previewUpdateId) return;
 
         const previewItem = document.createElement('div');
         previewItem.className = 'preview-item';
@@ -332,6 +342,7 @@ export async function updatePreview(DOM) {
         document.dispatchEvent(new CustomEvent('files-updated'));
     });
 
+    if (updateId !== previewUpdateId) return;
     DOM.previewArea.appendChild(previewList);
 }
 
@@ -487,6 +498,8 @@ export function showResults(results, DOM) {
  * 단어 선택 후 미리보기만 업데이트하는 경량화된 함수
  */
 export function updateWordMethodPreview(DOM) {
+    const updateId = ++previewUpdateId;
+
     // 현재 메소드가 word가 아니면 전체 미리보기 업데이트
     if (State.currentMethod !== 'word') {
         updatePreview(DOM);
@@ -495,6 +508,7 @@ export function updateWordMethodPreview(DOM) {
 
     // 모든 파일의 새 이름 생성 및 미리보기 업데이트
     for (let index = 0; index < State.selectedFiles.length; index++) {
+        if (updateId !== previewUpdateId) return;
         const file = State.selectedFiles[index];
         const fileName = getFileName(file);
 
@@ -511,6 +525,7 @@ export function updateWordMethodPreview(DOM) {
             State.treatSelectionAsOne,
             State.selectedGroups
         ).then(newName => {
+            if (updateId !== previewUpdateId) return;
             // 미리보기 요소 찾기
             const previewItem = document.querySelector(`.preview-item[data-index="${index}"]`);
             if (previewItem) {

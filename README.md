@@ -94,4 +94,54 @@ ISC License © 2025 HEIMLICH®
 ## Contact
 
 - Website: [heimlich.studio](https://heimlich.studio)
-- Repository: [GitHub](https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER) 
+- Repository: [GitHub](https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER)
+
+## 개발 환경 설정
+
+```
+npm install
+npm start
+```
+
+## 빌드 및 배포
+
+### macOS 앱 빌드, 코드 서명 및 공증
+
+macOS에서 앱을 빌드하고 Apple 공증(Notarization)을 받기 위한 절차:
+
+1. **한 번에 빌드 및 공증**:
+   ```
+   npm run sign-and-notarize
+   ```
+   이 명령어는 앱을 빌드하고, 코드 서명 후 Apple 공증 서비스에 제출합니다.
+
+2. **수동으로 단계별 진행**:
+   ```
+   # 1. 앱 빌드
+   npm run build -- --mac
+   
+   # 2. 모든 바이너리 서명
+   node scripts/sign-all.js
+   
+   # 3. 공증 진행
+   node scripts/manual-notarize.js
+   ```
+
+3. **주의사항**:
+   - 유효한 Apple Developer ID 인증서가 필요합니다.
+   - 코드 서명 인증서는 시스템에 올바르게 설치되어 있어야 합니다.
+   - 루트 및 중간 인증서가 신뢰되어 있어야 합니다.
+
+### Windows 및 Linux 빌드
+
+```
+# Windows
+npm run build -- --win
+
+# Linux
+npm run build -- --linux
+```
+
+## 라이센스
+
+MIT License 

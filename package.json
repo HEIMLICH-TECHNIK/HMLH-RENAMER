@@ -8,7 +8,8 @@
         "build": "cross-env electron-builder",
         "test": "echo \"Error: no test specified\" && exit 1",
         "postinstall": "electron-builder install-app-deps",
-        "release": "electron-builder --publish always"
+        "release": "electron-builder --publish always",
+        "sign-and-notarize": "npm run build -- --mac && node scripts/manual-notarize.js"
     },
     "author": "HEIMLICH",
     "license": "MIT",
@@ -16,7 +17,8 @@
         "cross-env": "^7.0.3",
         "electron": "^29.4.6",
         "electron-builder": "^24.12.0",
-        "electron-rebuild": "^3.2.9"
+        "electron-rebuild": "^3.2.9",
+        "@electron/notarize": "^2.3.0"
     },
     "dependencies": {
         "@ffprobe-installer/ffprobe": "^2.1.2",
@@ -36,18 +38,17 @@
             "node_modules/@img/**/*",
             "node_modules/@ffprobe-installer/**/*"
         ],
+        "afterSign": "scripts/notarize.js",
         "win": {
             "target": [
                 "nsis"
             ],
             "icon": "assets/icons/app-icon.ico",
             "artifactName": "${productName}-Setup-${version}.${ext}",
-            "extraResources": [
-                {
-                    "from": "node_modules/@ffprobe-installer/win32-x64/ffprobe.exe",
-                    "to": "ffprobe/ffprobe.exe"
-                }
-            ]
+            "extraResources": [{
+                "from": "node_modules/@ffprobe-installer/win32-x64/ffprobe.exe",
+                "to": "ffprobe/ffprobe.exe"
+            }]
         },
         "mac": {
             "target": [
@@ -56,16 +57,15 @@
             "icon": "assets/icons/app-icon.icns",
             "artifactName": "${productName}-${version}-${arch}.${ext}",
             "category": "public.app-category.utilities",
-            "extraResources": [
-                {
-                    "from": "node_modules/@ffprobe-installer/darwin-arm64/ffprobe",
-                    "to": "ffprobe/ffprobe"
-                }
-            ],
+            "extraResources": [{
+                "from": "node_modules/@ffprobe-installer/darwin-arm64/ffprobe",
+                "to": "ffprobe/ffprobe"
+            }],
             "hardenedRuntime": true,
             "entitlements": "entitlements.mac.plist",
             "entitlementsInherit": "entitlements.mac.plist",
-            "gatekeeperAssess": false
+            "gatekeeperAssess": false,
+            "identity": "402600FA8B2EDE2E913E7382942BFCD60653A021"
         },
         "linux": {
             "target": [
@@ -74,12 +74,10 @@
             "icon": "assets/icons/app-icon.png",
             "artifactName": "${productName}-${version}.${ext}",
             "category": "Utility",
-            "extraResources": [
-                {
-                    "from": "node_modules/@ffprobe-installer/linux-x64/ffprobe",
-                    "to": "ffprobe/ffprobe"
-                }
-            ]
+            "extraResources": [{
+                "from": "node_modules/@ffprobe-installer/linux-x64/ffprobe",
+                "to": "ffprobe/ffprobe"
+            }]
         },
         "nsis": {
             "oneClick": false,
@@ -117,8 +115,7 @@
             "owner": "HEIMLICH-STUDIO",
             "repo": "HMLH-RENAMER",
             "releaseType": "release"
-        },
-        "afterSign": "scripts/notarize.js"
+        }
     },
     "keywords": [
         "file",

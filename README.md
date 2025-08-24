@@ -89,7 +89,7 @@ cond(log.includes('LogC'), 'ARRI_', cond(log.includes('RED Log'), 'RED_', cond(l
 
 ## License
 
-ISC License © 2025 HEIMLICH®
+ISC License © 2025 HEIMLICH TECHNIK™
 
 ## Contact
 

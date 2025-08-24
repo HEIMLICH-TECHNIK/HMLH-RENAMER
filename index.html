@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RENAMER by HEIMLICH®</title>
+    <title>RENAMER by HEIMLICH TECHNIK™ </title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -16,7 +16,7 @@
             <div class="sidebar-fixed-header">
                 <div class="logo-header">
                     <div class="logo">
-                        <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="FILE RENAMER by HEIMLICH" class="logo-image">
+                        <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="RENAMER by HEIMLICH TECHNIK™" class="logo-image"> 
                     </div>
                     <button id="profileBtn" class="profile-btn" title="Settings">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -54,6 +54,7 @@
                             <div class="var-item"><span class="var"><span class="clickable-var">{width}</span></span>, <span class="var"><span class="clickable-var">{height}</span></span> - Image/video dimensions</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">{duration}</span></span>, <span class="var"><span class="clickable-var">{duration_fmt}</span></span> - Video length in seconds, formatted time (HH:MM:SS)</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">{frames}</span></span> - Total number of frames in video</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">{frames4}</span></span>, <span class="var"><span class="clickable-var">{frames5}</span></span>, <span class="var"><span class="clickable-var">{frames6}</span></span> - 4, 5, 6-digit zero-padded frame numbers</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">{colorspace}</span></span> - Color space of the video</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">{log}</span></span> - Color transfer characteristic (log, linear, etc.)</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">{codec}</span></span> - Video codec (H264, HEVC, ProRes, etc.)</div>
@@ -83,6 +84,7 @@
                             <div class="example-title">Examples:</div>
                             <code class="clickable-example">{name}_{width}x{height}</code>
                             <code class="clickable-example">{if_video:VIDEO_}{name}_{duration_fmt}</code>
+                            <code class="clickable-example">{if_video:{name}_f{frames4}_{duration_fmt}}</code>
                             <code class="clickable-example">{if_image:{if_landscape:LANDSCAPE_}{if_portrait:PORTRAIT_}}{name}</code>
                         </div>
                     </div>
@@ -269,6 +271,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                         <h4>Functions:</h4>
                         <div class="var-list">
                             <div class="var-item"><span class="var"><span class="clickable-var">padnum(num, len)</span></span> - Zero-padded number</div>
+                            <div class="var-item"><span class="var"><span class="clickable-var">padframes(len)</span></span> - Zero-padded frame number (shorthand for padnum(frames, len))</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">upper(s)</span></span> - Uppercase string</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">lower(s)</span></span> - Lowercase string</div>
                             <div class="var-item"><span class="var"><span class="clickable-var">cond(cond, t, f)</span></span> - Conditional (if-then-else)</div>
@@ -281,6 +284,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                             <div class="var-item"><code class="clickable-example">name + "_" + padnum(index + 1, 3)</code></div>
                             <div class="var-item"><code class="clickable-example">upper(name) + "_" + date</code></div>
                             <div class="var-item"><code class="clickable-example">cond(isVideo, "VID_" + formatTime(duration), name)</code></div>
+                            <div class="var-item"><code class="clickable-example">cond(isVideo, name + "_f" + padframes(4), name)</code></div>
                             <div class="var-item"><code class="clickable-example">cond(width > height, "landscape_", "portrait_") + name</code></div>
                         </div>
                     </div>
@@ -307,7 +311,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                 </div>
 
                 <div class="sidebar-footer-version">
-                    <span>© 2025 <a href="https://heimlich.studio" class="footer-link">HEIMLICH®</a> <button id="versionInfoBtn" class="footer-link btn-text">-</button></span>
+                    <span>© 2025 <a href="https://heimlich.haus" class="footer-link">HEIMLICH TECHNIK™</a> <button id="versionInfoBtn" class="footer-link btn-text">-</button></span>
                 </div>
             </div>
         </div>
@@ -505,6 +509,11 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                                         <div class="example-name">Frame Range</div>
                                         <code class="clickable-example">name + '_fr' + padnum(index * 5 + 1, 4) + '-' + padnum(index * 5 + frames > 100 ? 100 : frames, 4) + '.' + fileext</code>
                                         <div class="example-desc">Adds frame range to filename (e.g. shot_fr0001-0100)</div>
+                                    </div>
+                                    <div class="example-item" data-expression="name + '_f' + padframes(5) + '_v001.' + fileext">
+                                        <div class="example-name">Padded Frame Count</div>
+                                        <code class="clickable-example">name + '_f' + padframes(5) + '_v001.' + fileext</code>
+                                        <div class="example-desc">Adds 5-digit zero-padded frame count (e.g. shot_f01234_v001)</div>
                                     </div>
                                     <div class="example-item" data-expression="name + '_' + cond(frames/duration > 24, cond(frames/duration >= 60, '60fps', '30fps'), '24fps') + '.' + fileext">
                                         <div class="example-name">Frame Rate</div>
@@ -798,7 +807,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
                     <div class="settings-group">
                         <h4>About</h4>
                         <div class="settings-about">
-                            <p>RENAMER by HEIMLICH® Version <span id="appVersionDisplay">-</span></p>
+                            <p>RENAMER by HEIMLICH TECHNIK™ Version <span id="appVersionDisplay">-</span></p>
                             <p>© 2025 HEIMLICH</p>
                             <div class="settings-links">
                                 <a href="#" id="openAboutModalBtn" class="settings-link">View Details</a>
@@ -841,7 +850,7 @@ name + '_' + padnum(index + 1, 3) + (fileext ? '.' + fileext : '')"></textarea>
             <div class="about-header">
                 <div class="about-bg-pattern"></div>
                 <div class="about-header-content">
-                    <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="RENAMER by HEIMLICH" class="about-logo">
+                    <img src="assets/HEIMLICH_TYPOLOGO.svg" alt="RENAMER by HEIMLICH TECHNIK™" class="about-logo">
                     <div class="about-version">-</div>
                     <div class="about-tagline">Advanced file renaming tool for creators</div>
                 </div>

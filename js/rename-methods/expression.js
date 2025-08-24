@@ -122,6 +122,7 @@ async function applyExpression(baseName, fileExt, fileName, filePath, index, exp
       pixelFormat: pixelFormat,
       // 헬퍼 함수들
       padnum: (num, length) => num.toString().padStart(length, '0'),
+      padframes: (length) => frames.toString().padStart(length, '0'),
       upper: (str) => str.toUpperCase(),
       lower: (str) => str.toLowerCase(),
       substr: (str, start, length) => str.substr(start, length),

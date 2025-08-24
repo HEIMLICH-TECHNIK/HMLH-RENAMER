@@ -59,6 +59,11 @@ async function applyPattern(baseName, fileExt, index, pattern, filePath, metaDat
   // 패딩 처리된 숫자 (3자리)
   const paddedNumber = numValue.toString().padStart(3, '0');
   
+  // frames 패딩 처리 (4자리, 5자리, 6자리)
+  const frames4 = frames.toString().padStart(4, '0');
+  const frames5 = frames.toString().padStart(5, '0');
+  const frames6 = frames.toString().padStart(6, '0');
+  
   // 패턴의 변수 교체
   let newName = patternToUse
     .replace(/{name}/g, baseName)
@@ -71,6 +76,9 @@ async function applyPattern(baseName, fileExt, index, pattern, filePath, metaDat
     .replace(/{duration}/g, duration.toString())
     .replace(/{duration_fmt}/g, durationFormatted)
     .replace(/{frames}/g, frames.toString())
+    .replace(/{frames4}/g, frames4)
+    .replace(/{frames5}/g, frames5)
+    .replace(/{frames6}/g, frames6)
     .replace(/{colorspace}/g, colorspace)
     .replace(/{log}/g, colorTransfer)
     .replace(/{codec}/g, codec)

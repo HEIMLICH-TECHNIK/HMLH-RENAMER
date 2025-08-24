@@ -9,7 +9,7 @@ const DOM = {
   emptyDropArea: document.getElementById('emptyDropArea'),
   filesPreview: document.getElementById('filesPreview'),
   fileSelectBtn: document.getElementById('fileSelectBtn'),
-  fileList: document.getElementById('fileList'),
+
   fileCount: document.getElementById('fileCount'),
   previewArea: document.getElementById('previewArea'),
   applyBtn: document.getElementById('applyBtn'),

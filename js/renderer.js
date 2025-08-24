@@ -10,7 +10,7 @@ import { saveToHistory, updateHistoryButtons, undo, redo } from './core/history.
 
 // 컴포넌트 모듈 임포트
 import { setupModalHandlers, saveCurrentRule, openRulesModal, loadRule, deleteRule } from './components/modal.js';
-import { handleFiles, setupDragAndDrop, sortFiles, updateFileList } from './components/file-handler.js';
+import { handleFiles, setupDragAndDrop, sortFiles } from './components/file-handler.js';
 import { loadMediaMetadata } from './components/media-metadata.js';
 import { updatePreview, generateNewName, showResults, updateWordMethodPreview, updateAfterWordSelection } from './components/preview.js';
 import { renameFiles, handleRenameResults } from './components/rename.js';

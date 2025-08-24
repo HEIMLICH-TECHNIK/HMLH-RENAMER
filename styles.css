@@ -104,12 +104,20 @@ body {
     align-items: center;
     width: 100%;
     padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .logo {
     padding: 15px 20px;
     text-align: left;
     flex-grow: 1;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .profile-btn {
@@ -126,6 +134,10 @@ body {
     color: var(--sidebar-text);
     transition: all 0.2s ease;
     background-color: rgba(255, 255, 255, 0.1);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .profile-btn:hover {
@@ -438,6 +450,10 @@ select:focus {
     font-weight: 500;
     color: var(--text-primary);
     margin-right: 15px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 
@@ -492,6 +508,10 @@ select:focus {
     color: var(--text-secondary);
     font-weight: 400;
     margin-left: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .content-body {
@@ -528,12 +548,20 @@ select:focus {
 .drop-icon {
     margin-bottom: 20px;
     color: var(--text-secondary);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .empty-drop-area p {
     font-size: 16px;
     margin-bottom: 20px;
     color: var(--text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 
@@ -588,6 +616,10 @@ select:focus {
     color: var(--text-primary);
     white-space: nowrap;
     margin-right: 10px;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .preview-area {
@@ -2553,6 +2585,10 @@ input:checked+.toggle-slider:before {
   margin-top: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 #fileSelectBtn:hover {
@@ -2561,6 +2597,13 @@ input:checked+.toggle-slider:before {
   color: var(--input-text);
   /* transform: translateY(-2px); */
   /* box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); */
+}
+
+#fileSelectBtn p {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .empty-drop-area {

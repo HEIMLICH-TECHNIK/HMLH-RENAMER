@@ -43,55 +43,12 @@ export async function handleFiles(fileList) {
 
 /**
  * 파일 목록 업데이트
+ * 현재 애플리케이션에서는 미리보기 영역에서 파일 목록을 관리하므로 이 함수는 빈 함수로 유지
  */
 export function updateFileList(DOM) {
-    DOM.fileList.innerHTML = '';
-
-    if (State.selectedFiles.length === 0) {
-        return;
-    }
-
-    State.selectedFiles.forEach((file, index) => {
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-
-        // 파일 아이콘 추가
-        const fileIcon = document.createElement('div');
-        fileIcon.className = 'file-icon';
-        fileIcon.innerHTML = '📄';
-
-        // 상세 정보 컨테이너 생성
-        const fileDetails = document.createElement('div');
-        fileDetails.className = 'file-details';
-
-        const fileName = document.createElement('div');
-        fileName.className = 'file-name';
-        fileName.textContent = getFileName(file);
-
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'file-info';
-        fileInfo.textContent = file;
-
-        // 상세 정보 추가
-        fileDetails.appendChild(fileName);
-        fileDetails.appendChild(fileInfo);
-
-        // 제거 버튼 생성
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'remove-btn';
-        removeBtn.innerHTML = '&times;';
-        removeBtn.title = 'Remove file';
-        removeBtn.addEventListener('click', () => {
-            State.selectedFiles.splice(index, 1);
-            document.dispatchEvent(new CustomEvent('files-updated'));
-        });
-
-        // 요소들을 파일 항목에 추가
-        fileItem.appendChild(fileIcon);
-        fileItem.appendChild(fileDetails);
-        fileItem.appendChild(removeBtn);
-        DOM.fileList.appendChild(fileItem);
-    });
+    // 현재 구조에서는 미리보기 영역에서 파일 목록을 관리하므로
+    // 별도의 파일 목록 업데이트가 필요하지 않음
+    console.log('File list update called - managed by preview area');
 }
 
 /**

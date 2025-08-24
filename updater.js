@@ -22,9 +22,9 @@ const UPDATE_CHECK_THROTTLE = 5000; // 업데이트 확인 간격 제한 (5초)
 
 // GitHub 저장소 정보
 const GITHUB_INFO = {
-    owner: 'HEIMLICH-STUDIO',
+    owner: 'HEIMLICH-TECHNIK',
     repo: 'HMLH-RENAMER',
-    apiUrl: 'https://api.github.com/repos/HEIMLICH-STUDIO/HMLH-RENAMER/releases'
+    apiUrl: 'https://api.github.com/repos/HEIMLICH-TECHNIK/HMLH-RENAMER/releases'
 };
 
 // 업데이트 관리자 초기화

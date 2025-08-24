@@ -33,9 +33,11 @@ export function updateUI(DOM) {
     updateFileList(DOM);
     
     // 파일 개수 업데이트
-    DOM.fileCount.textContent = State.selectedFiles.length === 1 ?
-        '1 file selected' :
-        `${State.selectedFiles.length} files selected`;
+    if (DOM.fileCount) {
+        DOM.fileCount.textContent = State.selectedFiles.length === 1 ?
+            '1' :
+            `${State.selectedFiles.length}`;
+    }
 
     // 히스토리 버튼 상태 업데이트
     updateHistoryButtons(DOM.undoBtn, DOM.redoBtn);

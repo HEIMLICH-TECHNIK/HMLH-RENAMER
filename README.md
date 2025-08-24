@@ -93,8 +93,8 @@ ISC License © 2025 HEIMLICH®
 
 ## Contact
 
-- Website: [heimlich.studio](https://heimlich.studio)
-- Repository: [GitHub](https://github.com/HEIMLICH-STUDIO/HMLH-RENAMER)
+- Website: [heimlich.haus](https://heimlich.haus)
+- Repository: [GitHub](https://github.com/HEIMLICH-TECHNIK/HMLH-RENAMER)
 
 ## 개발 환경 설정
 
@@ -141,7 +141,3 @@ npm run build -- --win
 # Linux
 npm run build -- --linux
 ```
-
-## 라이센스
-
-MIT License 
